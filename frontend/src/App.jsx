@@ -22,7 +22,49 @@ function App() {
   const [aiStrategy, setAiStrategy] = useState(null)
   const [loadingAi, setLoadingAi] = useState(false)
 
-  // ... useEffects
+  // Current date state
+  const [today] = useState(new Date())
+
+  useEffect(() => {
+    if (!supabase) return; // Guard against missing keys
+
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
+      if (session?.user) {
+        setProfile(prev => ({ ...prev, name: session.user.user_metadata.full_name || '' }));
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+      if (session?.user) {
+        setProfile(prev => ({ ...prev, name: session.user.user_metadata.full_name || '' }));
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    if (!supabase) {
+      alert("Supabase keys are missing! Please check supabaseClient.js");
+      return;
+    }
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+  };
+
+  const handleLogout = async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setUser(null);
+    setProfile(prev => ({ ...prev, name: '' }));
+  };
 
   const calculateDestiny = async () => {
     if (!profile.dob) return
