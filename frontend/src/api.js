@@ -1,8 +1,8 @@
 // Sanitize URL: remove trailing slash if present
-const rawUrl = import.meta.env.VITE_API_URL || 'merry-flow.railway.internal';
+const rawUrl = import.meta.env.VITE_API_URL || 'merry-flow.railway.app';
 const API_URL = rawUrl.replace(/\/$/, '');
 
-console.log("🚀 Frontend is connecting to Backend at:", merry-flow.railway.internal);
+console.log("🚀 Frontend is connecting to Backend at:", merry-flow.railway.app);
 
 export const fetchDailyAnalysis = async (dob, date, name) => {
     try {
