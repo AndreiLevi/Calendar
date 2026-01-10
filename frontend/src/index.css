@@ -1,0 +1,153 @@
+:root {
+  --primary: #9d50bb;
+  --secondary: #6e48aa;
+  --bg-gradient: linear-gradient(135deg, #9d50bb 0%, #6e48aa 100%);
+  --glass: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --text: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.7);
+  --accent: #ff007f;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: #0f0c29;
+  background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  max-width: 1200px;
+  padding: 2rem;
+}
+
+.calendar-container {
+  /* Removed "frame": border, specific background, and shadow */
+  /* Keeping padding and radius for layout structure, but making it seamless */
+  width: 100%;
+  min-height: 100vh;
+  /* Full screen */
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* subtle glass effect for readability only where content is, or just transparency */
+  background: rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.header h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(to right, #fff, var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  color: var(--text-dim);
+  font-size: 1.1rem;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1rem;
+}
+
+.day-card {
+  aspect-ratio: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.day-card:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-5px) scale(1.05);
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(255, 0, 127, 0.3);
+}
+
+.day-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.vibration {
+  font-size: 0.8rem;
+  margin-top: 5px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Glass Input */
+input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 0.8rem 1.2rem;
+  color: white;
+  width: 100%;
+  margin-bottom: 1rem;
+  transition: border-color 0.3s;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+button {
+  background: linear-gradient(45deg, var(--primary), var(--accent));
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+button:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 20px -5px rgba(255, 0, 127, 0.5);
+}

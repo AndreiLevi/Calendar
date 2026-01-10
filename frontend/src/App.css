@@ -1,0 +1,121 @@
+#root {
+  max-width: 100%;
+  width: 95%;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-bottom: 3rem;
+  width: 100%;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Sun Animation: Slow spin and radiant pulse */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sun-pulse {
+  0% {
+    filter: drop-shadow(0 0 15px rgba(255, 165, 0, 0.6));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 40px rgba(255, 69, 0, 0.8));
+  }
+
+  100% {
+    filter: drop-shadow(0 0 15px rgba(255, 165, 0, 0.6));
+  }
+}
+
+.sun-icon {
+  animation: spin-slow 120s linear infinite, sun-pulse 3s ease-in-out infinite alternate;
+  mix-blend-mode: screen;
+  border-radius: 50%;
+  /* Fallback: Force circular crop */
+  mask-image: radial-gradient(circle, black 65%, transparent 71%);
+  -webkit-mask-image: radial-gradient(circle, black 65%, transparent 71%);
+}
+
+/* Moon Animation: Gentle float and silvery glow */
+@keyframes float-glow {
+  0% {
+    transform: translateY(0px);
+    filter: drop-shadow(0 0 10px rgba(192, 192, 192, 0.4));
+  }
+
+  50% {
+    transform: translateY(-10px);
+    filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.6));
+  }
+
+  100% {
+    transform: translateY(0px);
+    filter: drop-shadow(0 0 10px rgba(192, 192, 192, 0.4));
+  }
+}
+
+.moon-icon {
+  animation: float-glow 6s ease-in-out infinite;
+  mix-blend-mode: screen;
+  border-radius: 50%;
+  mask-image: radial-gradient(circle, black 65%, transparent 71%);
+  -webkit-mask-image: radial-gradient(circle, black 65%, transparent 71%);
+}
