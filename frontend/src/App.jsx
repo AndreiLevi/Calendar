@@ -1,13 +1,7 @@
-import { useState, useEffect } from 'react'
-import TaskPlanner from './TaskPlanner'
-import StrategicAdvisor from './components/StrategicAdvisor'
-import ParticleBackground from './components/ParticleBackground'
-import { NumerologyEngine } from './utils/numerologyEngine'
-import { MayanEngine } from './utils/mayanEngine'
-import { JyotishEngine } from './utils/jyotishEngine'
-import './App.css'
+import DailyStrategy from './components/DailyStrategy'
+import { fetchDailyAnalysis } from './api'
 
-import { supabase } from './supabaseClient';
+// ... imports
 
 function App() {
   const [profile, setProfile] = useState({ name: '', dob: '' })
@@ -16,61 +10,24 @@ function App() {
   const [mayan, setMayan] = useState(null)
   const [jyotish, setJyotish] = useState(null)
 
-  // Current date state
-  const [today] = useState(new Date())
+  // AI Strategy State
+  const [aiStrategy, setAiStrategy] = useState(null)
+  const [loadingAi, setLoadingAi] = useState(false)
 
-  useEffect(() => {
-    if (!supabase) return; // Guard against missing keys
+  // ... useEffects
 
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user || null);
-      if (session?.user) {
-        setProfile(prev => ({ ...prev, name: session.user.user_metadata.full_name || '' }));
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-      if (session?.user) {
-        setProfile(prev => ({ ...prev, name: session.user.user_metadata.full_name || '' }));
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleGoogleLogin = async () => {
-    if (!supabase) {
-      alert("Supabase keys are missing! Please check supabaseClient.js");
-      return;
-    }
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    });
-  };
-
-  const handleLogout = async () => {
-    if (!supabase) return;
-    await supabase.auth.signOut();
-    setUser(null);
-    setProfile(prev => ({ ...prev, name: '' }));
-  };
-
-  const calculateDestiny = () => {
+  const calculateDestiny = async () => {
     if (!profile.dob) return
 
     // Core Calculations
     const currentYear = today.getFullYear()
     const currentMonth = today.getMonth() + 1
-    // Simple week calculation: day / 7 roughly
     const currentWeek = Math.ceil(today.getDate() / 7)
 
     const lifePath = NumerologyEngine.calculateLifePath(profile.dob)
     const personalYear = NumerologyEngine.calculatePersonalYear(profile.dob, currentYear)
     const dailyVibration = NumerologyEngine.calculateDailyVibration(profile.dob, today.toISOString().split('T')[0])
 
-    // New Calculations
     const universalDay = NumerologyEngine.calculateUniversalDay(today.toISOString().split('T')[0])
     const personalMonth = NumerologyEngine.calculatePersonalMonth(profile.dob, currentYear, currentMonth)
     const personalWeek = NumerologyEngine.calculatePersonalWeek(profile.dob, currentYear, currentMonth, currentWeek)
@@ -94,15 +51,21 @@ function App() {
       personalWeek,
       intensity: [11, 22, 33].includes(dailyVibration) ? 2 : 1
     })
+
+    // Fetch AI Strategy
+    setLoadingAi(true);
+    setAiStrategy(null);
+    const analysis = await fetchDailyAnalysis(profile.dob, today.toISOString().split('T')[0], profile.name);
+    if (analysis && analysis.strategy) {
+      setAiStrategy(analysis.strategy);
+    }
+    setLoadingAi(false);
   }
 
-  // Generate calendar grid for the current month
-  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+  // ...
 
   return (
     <div className="calendar-container">
-      {/* Pass intensity based on the daily vibe */}
       <ParticleBackground intensity={data?.intensity || 1} />
 
       <div className="header" style={{
@@ -251,9 +214,13 @@ function App() {
 
       {data && (
         <div style={{ animation: 'fadeIn 1s ease-out' }}>
-          {/* Main Dashboard Grid */}
+
+          {/* NEW: AI Strategy Component at the top of results */}
+          <DailyStrategy strategy={aiStrategy} isLoading={loadingAi} />
+
           {/* Main Dashboard Grid */}
           <div className="dashboard-grid">
+            {/* ... */}
 
             {/* 1. Numerology Column */}
             <div style={{
