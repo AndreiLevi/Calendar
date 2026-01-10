@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const TaskPlanner = ({ vibration }) => {
+const TaskPlanner = ({ vibration, aiSummary }) => {
     const [tasks, setTasks] = useState([]);
     const [newTask, setNewTask] = useState('');
 
@@ -35,6 +35,22 @@ const TaskPlanner = ({ vibration }) => {
             <h3 style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
                 Day {vibration}: {advice.theme} Mode
             </h3>
+
+            {/* AI Summary Section */}
+            {aiSummary && (
+                <div style={{
+                    marginBottom: '1.5rem',
+                    background: 'rgba(255, 215, 0, 0.1)',
+                    border: '1px solid rgba(255, 215, 0, 0.3)',
+                    borderRadius: '12px',
+                    padding: '1rem',
+                    color: '#e2e8f0',
+                    lineHeight: '1.5',
+                    fontStyle: 'italic'
+                }}>
+                    <strong>💡 AI Insight:</strong> {aiSummary}
+                </div>
+            )}
 
             <div className="suggestions" style={{ marginBottom: '1.5rem' }}>
                 <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>✨ Power Tasks for Today:</p>

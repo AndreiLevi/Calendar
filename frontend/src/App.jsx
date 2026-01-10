@@ -433,7 +433,7 @@ function App() {
           </div>
 
           <StrategicAdvisor dob={profile.dob} />
-          <TaskPlanner vibration={data.dailyVibration} />
+          <TaskPlanner vibration={data.dailyVibration} aiSummary={aiStrategy} />
         </div>
       )}
     </div>
