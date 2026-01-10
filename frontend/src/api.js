@@ -1,6 +1,6 @@
 // HARDCODED PRODUCTION URL FOR DEBUGGING
 // We bypass environment variables to ensure we hit the correct public address
-const API_URL = 'https://merry-flow.railway.app';
+const API_URL = 'merry-flow-production.up.railway.app';
 
 console.log("🚀 Frontend is connecting to Backend at:", API_URL);
 
