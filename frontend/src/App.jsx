@@ -1,7 +1,15 @@
 import DailyStrategy from './components/DailyStrategy'
 import { fetchDailyAnalysis } from './api'
 
-// ... imports
+import { useState, useEffect } from 'react'
+import TaskPlanner from './TaskPlanner'
+import StrategicAdvisor from './components/StrategicAdvisor'
+import ParticleBackground from './components/ParticleBackground'
+import { NumerologyEngine } from './utils/numerologyEngine'
+import { MayanEngine } from './utils/mayanEngine'
+import { JyotishEngine } from './utils/jyotishEngine'
+import './App.css'
+import { supabase } from './supabaseClient';
 
 function App() {
   const [profile, setProfile] = useState({ name: '', dob: '' })
