@@ -8,7 +8,7 @@ console.log("🚀 Frontend is connecting to Backend at:", API_URL);
 
 export const fetchDailyAnalysis = async (dob, date, name) => {
     try {
-        const response = await fetch(`${API_URL}/api/analyze`, {
+        const response = await fetch(`${merry-flow-production.up.railway.app}/api/analyze`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
