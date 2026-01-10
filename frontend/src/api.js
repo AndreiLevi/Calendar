@@ -1,4 +1,8 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Sanitize URL: remove trailing slash if present
+const rawUrl = import.meta.env.VITE_API_URL || 'merry-flow.railway.internal';
+const API_URL = rawUrl.replace(/\/$/, '');
+
+console.log("🚀 Frontend is connecting to Backend at:", merry-flow.railway.internal);
 
 export const fetchDailyAnalysis = async (dob, date, name) => {
     try {
