@@ -1,7 +1,7 @@
 import React from 'react';
 
-const DailyStrategy = ({ strategy, isLoading }) => {
-    if (!strategy && !isLoading) return null;
+const DailyStrategy = ({ strategy, isLoading, error }) => {
+    if (!strategy && !isLoading && !error) return null;
 
     return (
         <div style={{
@@ -34,6 +34,10 @@ const DailyStrategy = ({ strategy, isLoading }) => {
             {isLoading ? (
                 <div style={{ opacity: 0.7, fontStyle: 'italic' }}>
                     Синтез энергий... (Обращение к Оракулу)
+                </div>
+            ) : error ? (
+                <div style={{ color: '#f87171', background: 'rgba(255,0,0,0.1)', padding: '1rem', borderRadius: '8px' }}>
+                    ⚠️ {error}
                 </div>
             ) : (
                 <div style={{

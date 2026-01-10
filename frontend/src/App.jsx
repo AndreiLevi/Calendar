@@ -21,6 +21,7 @@ function App() {
   // AI Strategy State
   const [aiStrategy, setAiStrategy] = useState(null)
   const [loadingAi, setLoadingAi] = useState(false)
+  const [aiError, setAiError] = useState(null)
 
   // Current date state
   const [today] = useState(new Date())
@@ -105,11 +106,21 @@ function App() {
     // Fetch AI Strategy
     setLoadingAi(true);
     setAiStrategy(null);
-    const analysis = await fetchDailyAnalysis(profile.dob, today.toISOString().split('T')[0], profile.name);
-    if (analysis && analysis.strategy) {
-      setAiStrategy(analysis.strategy);
+    setAiError(null);
+
+    try {
+      const analysis = await fetchDailyAnalysis(profile.dob, today.toISOString().split('T')[0], profile.name);
+      if (analysis && analysis.strategy) {
+        setAiStrategy(analysis.strategy);
+      } else {
+        // If we get here ensuring analysis is null/undefined means fallback or error
+        setAiError("Оракул молчит. (Проверьте Backend/API Key)");
+      }
+    } catch (err) {
+      setAiError("Ошибка связи с Оракулом.");
+    } finally {
+      setLoadingAi(false);
     }
-    setLoadingAi(false);
   }
 
   // ...
@@ -266,7 +277,7 @@ function App() {
         <div style={{ animation: 'fadeIn 1s ease-out' }}>
 
           {/* NEW: AI Strategy Component at the top of results */}
-          <DailyStrategy strategy={aiStrategy} isLoading={loadingAi} />
+          <DailyStrategy strategy={aiStrategy} isLoading={loadingAi} error={aiError} />
 
           {/* Main Dashboard Grid */}
           <div className="dashboard-grid">
