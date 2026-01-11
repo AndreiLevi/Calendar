@@ -20,6 +20,10 @@ class StrategyOrchestrator:
             self.client = OpenAI(
                 base_url=base_url,
                 api_key=api_key,
+                default_headers={
+                    "HTTP-Referer": "https://calendar-app.com",
+                    "X-Title": "Universal Calendar",
+                }
             )
         else:
             self.client = None
@@ -68,11 +72,7 @@ class StrategyOrchestrator:
                 messages=[
                     {"role": "system", "content": "You are a mystical yet practical strategic advisor using ancient wisdom."},
                     {"role": "user", "content": prompt}
-                ],
-                headers={
-                    "HTTP-Referer": "https://calendar-app.com", # Required by OpenRouter
-                    "X-Title": "Universal Calendar",
-                }
+                ]
             )
             return response.choices[0].message.content
         except Exception as e:
