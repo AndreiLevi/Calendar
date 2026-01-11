@@ -10,7 +10,7 @@ class StrategyOrchestrator:
 
     def __init__(self):
         # Configure API Key (User needs to set OPENROUTER_API_KEY in env)
-        api_key = os.getenv("OPENROUTER_API_KEY")
+        api_key = os.getenv("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")
         base_url = "https://openrouter.ai/api/v1"
         
         # Default to a high-quality model (User can override via ENV)
