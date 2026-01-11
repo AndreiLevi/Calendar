@@ -32,6 +32,7 @@ class DateRequest(BaseModel):
     dob: str
     date: str
     name: str = "User"
+    language: str = "ru" # Default to Russian
 
 @app.get("/")
 def health_check():
@@ -67,7 +68,8 @@ def analyze_day(request: DateRequest):
             numerology=numerology_full,
             mayan=mayan_data,
             jyotish=jyotish_data,
-            user_name=request.name
+            user_name=request.name,
+            language=request.language
         )
 
         return {

@@ -2,7 +2,7 @@ import { MAYAN_DATA } from './mayanData';
 
 export class MayanEngine {
 
-    static calculateTzolkin(dateString) {
+    static calculateTzolkin(dateString, language = 'ru') {
         if (!dateString) return null;
 
         const targetDate = new Date(dateString);
@@ -28,57 +28,82 @@ export class MayanEngine {
 
         const sealData = MAYAN_DATA.seals[sealIndex];
         const toneData = MAYAN_DATA.tones[toneIndex];
-        const colors = ["Красный", "Белый", "Синий", "Желтый"];
-        const color = colors[sealIndex % 4];
+
+        // Colors are simple enough to map inline or move to data, but for now:
+        const colors = {
+            ru: ["Красный", "Белый", "Синий", "Желтый"],
+            en: ["Red", "White", "Blue", "Yellow"],
+            he: ["אדום", "לבן", "כחול", "צהוב"]
+        };
+        const color = colors[language][sealIndex % 4];
 
         // Day Out of Time / Leap Day Logic
         if (this.isLeapDay(targetDate)) {
+            const hunabKu = {
+                ru: "Хунаб Ку", en: "Hunab Ku", he: "הונאב קו"
+            };
+            const dayOutOfTime = {
+                ru: "День Вне Времени", en: "Day Out of Time", he: "יום מחוץ לזמן"
+            };
+            const green = {
+                ru: "Зеленый", en: "Green", he: "ירוק"
+            };
+
             return {
                 kin: "0.0",
                 seal: 0,
-                sealName: "Хунаб Ку",
+                sealName: hunabKu[language],
                 tone: 0,
-                toneName: "День Вне Времени",
-                color: "Зеленый",
-                fullTitle: "День Вне Времени (Хунаб Ку)",
+                toneName: dayOutOfTime[language],
+                color: green[language],
+                fullTitle: `${dayOutOfTime[language]} (${hunabKu[language]})`,
                 fullMayanTitle: "0.0.Hunab Ku"
             };
         }
 
-        const moonData = this.calculate13MoonDate(targetDate);
-        const yearData = this.calculateYearBearer(targetDate, kin, moonData);
+        const moonData = this.calculate13MoonDate(targetDate, language);
+        const yearData = this.calculateYearBearer(targetDate, kin, moonData, language);
+
+        const sealName = sealData.name[language] || sealData.name['ru'];
+        const toneName = toneData.name[language] || toneData.name['ru'];
 
         return {
             kin: kin,
             seal: sealIndex + 1,
-            sealName: sealData.name,
+            sealName: sealName,
             mayanSealName: sealData.mayanName,
             tone: toneIndex + 1,
-            toneName: toneData.name,
+            toneName: toneName,
             mayanToneName: toneData.mayanName,
             color: color,
-            fullTitle: `${toneData.name} ${sealData.name}`,
+            fullTitle: `${toneName} ${sealName}`,
             fullMayanTitle: `${toneData.mayanName} ${sealData.mayanName}`,
-            action: sealData.action,
-            power: sealData.power,
-            essence: sealData.essence,
-            toneAction: toneData.action,
-            tonePower: toneData.power,
-            toneEssence: toneData.essence,
-            toneQuestion: toneData.question,
+            action: sealData.action[language],
+            power: sealData.power[language],
+            essence: sealData.essence[language],
+            toneAction: toneData.action[language],
+            tonePower: toneData.power[language],
+            toneEssence: toneData.essence[language],
+            toneQuestion: toneData.question[language],
             moon: moonData,
             year: yearData
         };
     }
 
-    static calculate13MoonDate(date) {
+    static calculate13MoonDate(date, language = 'ru') {
+        const hunabKu = { ru: "Хунаб Ку", en: "Hunab Ku", he: "הונאב קו" };
+        const dayOutOfTime = { ru: "День Вне Времени", en: "Day Out of Time", he: "יום מחוץ לזמן" };
+        const galactic = { ru: "Галактический", en: "Galactic", he: "גלקטי" };
+        const questionDOT = { ru: "Я есмь Праздник Жизни", en: "I am the Festival of Life", he: "אני חג החיים" };
+        const none = { ru: "Нет", en: "None", he: "אין" };
+
         if (this.isLeapDay(date)) {
             return {
                 number: 0,
-                name: "Хунаб Ку",
-                totem: "Нет",
+                name: hunabKu[language],
+                totem: none[language],
                 day: 0,
-                fullDate: "0.0.Хунаб Ку"
+                fullDate: `0.0.${hunabKu[language]}`
             };
         }
 
@@ -99,28 +124,42 @@ export class MayanEngine {
         if (dayDiff === 364) {
             return {
                 number: 0,
-                name: "День Вне Времени",
-                totem: "Галактический",
+                name: dayOutOfTime[language],
+                totem: galactic[language],
                 day: 0,
-                fullDate: "День Вне Времени",
-                question: "Я есмь Праздник Жизни"
+                fullDate: dayOutOfTime[language],
+                question: questionDOT[language]
             };
         }
 
         const moonIndex = Math.floor(dayDiff / 28);
         const dayOfMoon = (dayDiff % 28) + 1;
 
+        // Safety check for array bounds
+        if (moonIndex < 0 || moonIndex >= MAYAN_DATA.moons.length) {
+            return {
+                number: 0,
+                name: "?",
+                totem: "?",
+                day: dayOfMoon,
+                fullDate: `? ${dayOfMoon}`
+            };
+        }
+
+        const moonObj = MAYAN_DATA.moons[moonIndex];
+        const totem = MAYAN_DATA.totems[language][moonIndex];
+
         return {
             number: moonIndex + 1,
-            name: MAYAN_DATA.moons[moonIndex].name,
-            question: MAYAN_DATA.moons[moonIndex].question,
-            totem: MAYAN_DATA.totems[moonIndex],
+            name: moonObj.name[language],
+            question: moonObj.question[language],
+            totem: totem,
             day: dayOfMoon,
-            fullDate: `${MAYAN_DATA.moons[moonIndex].name} ${dayOfMoon}`
+            fullDate: `${moonObj.name[language]} ${dayOfMoon}`
         };
     }
 
-    static calculateYearBearer(date, currentKin, moonData) {
+    static calculateYearBearer(date, currentKin, moonData, language = 'ru') {
         if (moonData.number === 0) return null; // Day Out of Time or Leap Day
 
         const totalDays = ((moonData.number - 1) * 28) + moonData.day;
@@ -135,15 +174,25 @@ export class MayanEngine {
         const sealData = MAYAN_DATA.seals[sealIndex];
         const toneData = MAYAN_DATA.tones[toneIndex];
 
-        // Helper specifically for "Yellow Resonant Seed" -> "Желтого Резонансного Семени"
-        // This is complex grammar. 
-        // We will return standard nominative "Желтое Резонансное Семя" or approximate.
+        const wordYear = { ru: "Год", en: "Year", he: "שנה" };
+        const toneName = toneData.name[language];
+        const sealName = sealData.name[language];
+
+        const colorName = ["Красный", "Белый", "Синий", "Желтый"][sealIndex % 4];
+        // We can just reuse colors logic or keep simple. 
+        // Returning Russian adjective forms was ambitious. Standard is safer.
+        const colors = {
+            ru: ["Красный", "Белый", "Синий", "Желтый"],
+            en: ["Red", "White", "Blue", "Yellow"],
+            he: ["אדום", "לבן", "כחול", "צהוב"]
+        };
+
         return {
             kin: yearKin,
-            name: `Год ${toneData.name} ${sealData.name}`,
-            seal: sealData.name,
-            tone: toneData.name,
-            color: ["Красного", "Белого", "Синего", "Желтого"][sealIndex % 4]
+            name: `${wordYear[language]} ${toneName} ${sealName}`,
+            seal: sealName,
+            tone: toneName,
+            color: colors[language][sealIndex % 4]
         };
     }
 
@@ -170,3 +219,4 @@ export class MayanEngine {
         return date.getMonth() === 1 && date.getDate() === 29;
     }
 }
+

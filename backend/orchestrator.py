@@ -33,15 +33,28 @@ class StrategyOrchestrator:
                                   numerology: Dict, 
                                   mayan: Dict, 
                                   jyotish: Dict, 
-                                  user_name: str) -> str:
+                                  user_name: str,
+                                  language: str = "ru") -> str:
         
         if not self.client:
             return "AI Key missing. Please set OPENROUTER_API_KEY in Railway to receive real insights."
+
+        # Language Prompt Logic
+        lang_instruction = "Response MUST be in Russian."
+        if language == "en":
+            lang_instruction = "Response MUST be in English."
+        elif language == "he":
+            lang_instruction = "Response MUST be in Hebrew."
 
         # Construct the context
         prompt = f"""
         Act as a Wise Strategic Advisor for {user_name}.
         Synthesize the following 3 spiritual energies into a concise, tactical daily strategy.
+
+        IMPORTANT INSTRUCTION:
+        The input data below might be in Russian or another language. 
+        You MUST process the meaning of the data but generate your final response ENTIRELY in {language.upper()}.
+        Do not output any Russian text if the target language is not Russian.
 
         DATA:
         1. MAYAN (Tzolkin):
@@ -60,7 +73,8 @@ class StrategyOrchestrator:
            - Yoga: {jyotish.get('yoga', {}).get('name')}
 
         GOAL:
-        Write a single paragraph (3-4 sentences) Strategic Advice. 
+        Write a single paragraph (3-4 sentences) Strategic Advice.
+        - {lang_instruction}
         - DO NOT list the data again.
         - Combine the themes. Example: If Mayan is "Action" but Tithi is "Empty", advise "Cautious Action".
         - Be direct, empowering, and mystical but practical.

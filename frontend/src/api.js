@@ -1,19 +1,17 @@
-// HARDCODED PRODUCTION URL FOR DEBUGGING
-// We bypass environment variables to ensure we hit the correct public address
-const API_URL = 'https://merry-flow-production.up.railway.app';
+// Use Environment Variable for Flexibility (Local vs Prod)
+// In Railway, set VITE_API_URL to your Backend Public URL (https://...up.railway.app)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 console.log("🚀 Frontend is connecting to Backend at:", API_URL);
 
-console.log("🚀 Frontend is connecting to Backend at:", API_URL);
-
-export const fetchDailyAnalysis = async (dob, date, name) => {
+export const fetchDailyAnalysis = async (dob, date, name, language = 'ru') => {
     try {
         const response = await fetch(`${API_URL}/api/analyze`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ dob, date, name }),
+            body: JSON.stringify({ dob, date, name, language }),
         });
 
         if (!response.ok) {

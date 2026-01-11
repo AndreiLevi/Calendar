@@ -70,7 +70,8 @@ export class JyotishEngine {
         return moonL < 0 ? moonL + 360 : moonL % 360;
     }
 
-    static calculatePanchanga(dateString) {
+
+    static calculatePanchanga(dateString, language = 'ru') {
         if (!dateString) return null;
 
         // Approximate calculation for Sunrise
@@ -114,71 +115,99 @@ export class JyotishEngine {
         // 1st Karana: 0-6 deg. 2nd: 6-12 deg.
         // Total Karana Index = Math.floor(angle / 6) + 1.
         const karanaVal = Math.floor(angle / 6) + 1;
-        // Logic to map to names is complex cyclic.
 
         return {
-            tithi: this.getTithiData(tithiIndex),
-            nakshatra: this.getNakshatraData(nakshatraIndex),
-            yoga: this.getYogaData(yogaIndex),
-            vara: this.getVaraData(dow),
-            karana: this.getKaranaData(karanaVal)
+            tithi: this.getTithiData(tithiIndex, language),
+            nakshatra: this.getNakshatraData(nakshatraIndex, language),
+            yoga: this.getYogaData(yogaIndex, language),
+            vara: this.getVaraData(dow, language),
+            karana: this.getKaranaData(karanaVal, language)
         };
     }
 
-    static getTithiData(index) {
+    static getTithiData(index, language) {
         // Map 1-15 (Shukla) -> 1-15
         // Map 16-30 (Krishna) -> 1-15 but labeled Krishna
         const id = index > 15 ? index - 15 : index;
-        const paksha = index > 15 ? "Кришна Пакша (Убывающая)" : "Шукла Пакша (Растущая)";
-        const data = JYOTISH_DATA.tithis.find(t => t.id === id) || JYOTISH_DATA.tithis[0];
-        // Handle Amavasya (30) / Purnima (15) specific overrides in local data usually logic based
-        // In our data: 15 is Purnima, 30 is Amavasya.
-        // If index is 30, use id 30.
+
+        const shukla = { ru: "Шукла Пакша (Растущая)", en: "Shukla Paksha (Waxing)", he: "שוקלה פקשה (מתמלא)" };
+        const krishna = { ru: "Кришна Пакша (Убывающая)", en: "Krishna Paksha (Waning)", he: "קרישנה פקשה (מתמעט)" };
+
+        const paksha = index > 15 ? krishna[language] : shukla[language];
+
+        // Handle Amavasya (30) / Purnima (15) specific overrides
         let correctId = id;
         if (index === 30) correctId = 30;
 
         const finalData = JYOTISH_DATA.tithis.find(t => t.id === correctId) || JYOTISH_DATA.tithis[0];
 
         return {
-            ...finalData,
+            id: finalData.id,
+            name: finalData.name[language], // Now localized
+            type: finalData.type[language],
+            description: finalData.description[language],
             paksha: paksha,
-            fullTitle: `${finalData.name}, ${paksha}`
+            fullTitle: `${finalData.name[language]}, ${paksha}`
         };
     }
 
-    // ... implementations for others
-    static getNakshatraData(index) {
-        return JYOTISH_DATA.nakshatras.find(n => n.id === index) || {};
+    static getNakshatraData(index, language) {
+        const data = JYOTISH_DATA.nakshatras.find(n => n.id === index) || {};
+        if (!data.name) return {};
+
+        return {
+            id: data.id,
+            name: data.name[language],
+            ruler: data.ruler[language],
+            deity: data.deity[language]
+        };
     }
 
-    static getYogaData(index) {
-        return JYOTISH_DATA.yogas[index - 1]; // Array is 0-indexed
+    static getYogaData(index, language) {
+        const yogaObj = JYOTISH_DATA.yogas[index - 1]; // Array is 0-indexed
+        return yogaObj ? yogaObj[language] : "";
     }
 
-    static getVaraData(index) {
+    static getVaraData(index, language) {
         // JS: 0=Sun, 1=Mon. Jyotish: 0=Sun, 1=Mon. Matches.
-        return JYOTISH_DATA.varas.find(v => v.id === index);
+        const data = JYOTISH_DATA.varas.find(v => v.id === index);
+        if (!data) return {};
+        return {
+            id: data.id,
+            name: data.name[language],
+            planet: data.planet[language],
+            day: data.day[language]
+        };
     }
-    static getKaranaData(index) {
+
+    static getKaranaData(index, language) {
         // Logic for Karana cycle:
-        // Karana 1: Kimstughna (1st half of Tithi 1)
+        // Karana 1: Kimstughna (1st half of Tithi 1) - Index 10 in our array
         // Karana 2-57: Cycle of 7 (Bava..Vishti) * 8
-        // Karana 58-60: Shakuni, Chatushpada, Naga.
+        // Karana 58-60: Shakuni, Chatushpada, Naga. - Indices 7, 8, 9 in our array
 
-        // Simplification for MVP: Just return index or fixed list mapping.
-        // Let's implement full cycle.
+        // Array Indices in JYOTISH_DATA.karanas:
+        // 0-6: Bava...Vishti (Moving)
+        // 7: Shakuni
+        // 8: Chatushpada
+        // 9: Naga
+        // 10: Kimstughna
 
-        let name = "";
-        if (index === 1) name = "Кимстугхна";
-        else if (index >= 58) {
-            if (index === 58) name = "Шакуни";
-            if (index === 59) name = "Чатушпада";
-            if (index === 60) name = "Нага";
+        let dataObj = null;
+
+        if (index === 1) {
+            dataObj = JYOTISH_DATA.karanas[10]; // Kimstughna
+        } else if (index >= 58) {
+            if (index === 58) dataObj = JYOTISH_DATA.karanas[7]; // Shakuni
+            if (index === 59) dataObj = JYOTISH_DATA.karanas[8]; // Chatushpada
+            if (index === 60) dataObj = JYOTISH_DATA.karanas[9]; // Naga
         } else {
             const cycle = (index - 2) % 7;
-            const movingKaranas = ["Бава", "Балава", "Каулава", "Тнайтила", "Гара", "Ваниджа", "Вишти (Бхадра)"];
-            name = movingKaranas[cycle];
+            dataObj = JYOTISH_DATA.karanas[cycle];
         }
-        return name;
+
+        return dataObj ? dataObj[language] : "";
     }
 }
+
+
