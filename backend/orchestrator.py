@@ -1,22 +1,29 @@
 import os
-import google.generativeai as genai
+from openai import OpenAI
 from typing import Dict
 
 class StrategyOrchestrator:
     """
     The 'Master Mind' that synthesizes data from all agents into a cohesive strategy.
-    Uses Google Gemini (or compatible LLM) to generate natural language insights.
+    Uses OpenRouter (connects to DeepSeek, Claude, GPT-4, etc) via OpenAI compatible API.
     """
 
     def __init__(self):
-        # Configure API Key (User needs to set GOOGLE_API_KEY in env)
-        api_key = os.getenv("GOOGLE_API_KEY")
+        # Configure API Key (User needs to set OPENROUTER_API_KEY in env)
+        api_key = os.getenv("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")
+        base_url = "https://openrouter.ai/api/v1"
+        
+        # Default to a high-quality model (User can override via ENV)
+        self.model_name = os.getenv("OPENROUTER_MODEL", "anthropic/claude-4.5-sonnet")
+
         if api_key:
-            genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-pro')
+            self.client = OpenAI(
+                base_url=base_url,
+                api_key=api_key,
+            )
         else:
-            self.model = None
-            print("WARNING: GOOGLE_API_KEY not set. Orchestrator will return mock data.")
+            self.client = None
+            print("WARNING: OPENROUTER_API_KEY not set. Orchestrator will return mock data.")
 
     def synthesize_daily_strategy(self, 
                                   numerology: Dict, 
@@ -24,8 +31,8 @@ class StrategyOrchestrator:
                                   jyotish: Dict, 
                                   user_name: str) -> str:
         
-        if not self.model:
-            return "AI Key missing. Please set GOOGLE_API_KEY to receive real insights."
+        if not self.client:
+            return "AI Key missing. Please set OPENROUTER_API_KEY in Railway to receive real insights."
 
         # Construct the context
         prompt = f"""
@@ -56,7 +63,17 @@ class StrategyOrchestrator:
         """
 
         try:
-            response = self.model.generate_content(prompt)
-            return response.text
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": "You are a mystical yet practical strategic advisor using ancient wisdom."},
+                    {"role": "user", "content": prompt}
+                ],
+                headers={
+                    "HTTP-Referer": "https://calendar-app.com", # Required by OpenRouter
+                    "X-Title": "Universal Calendar",
+                }
+            )
+            return response.choices[0].message.content
         except Exception as e:
             return f"Error gathering wisdom: {str(e)}"
