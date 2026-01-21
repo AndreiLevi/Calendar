@@ -24,3 +24,66 @@ export const fetchDailyAnalysis = async (dob, date, name, language = 'ru') => {
         return null; // Fallback to local calculation if API fails
     }
 };
+
+// Profile Management API
+export const profileAPI = {
+    async createProfile(userId, profileData) {
+        const response = await fetch(`${API_URL}/api/profiles`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-User-Id': userId
+            },
+            body: JSON.stringify(profileData)
+        });
+        if (!response.ok) throw new Error('Failed to create profile');
+        return await response.json();
+    },
+
+    async getProfiles(userId) {
+        const response = await fetch(`${API_URL}/api/profiles`, {
+            headers: { 'X-User-Id': userId }
+        });
+        if (!response.ok) throw new Error('Failed to fetch profiles');
+        return await response.json();
+    },
+
+    async getActiveProfile(userId) {
+        const response = await fetch(`${API_URL}/api/profiles/active`, {
+            headers: { 'X-User-Id': userId }
+        });
+        if (!response.ok) throw new Error('Failed to fetch active profile');
+        return await response.json();
+    },
+
+    async updateProfile(userId, profileId, updates) {
+        const response = await fetch(`${API_URL}/api/profiles/${profileId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-User-Id': userId
+            },
+            body: JSON.stringify(updates)
+        });
+        if (!response.ok) throw new Error('Failed to update profile');
+        return await response.json();
+    },
+
+    async switchProfile(userId, profileId) {
+        const response = await fetch(`${API_URL}/api/profiles/${profileId}/switch`, {
+            method: 'POST',
+            headers: { 'X-User-Id': userId }
+        });
+        if (!response.ok) throw new Error('Failed to switch profile');
+        return await response.json();
+    },
+
+    async deleteProfile(userId, profileId) {
+        const response = await fetch(`${API_URL}/api/profiles/${profileId}`, {
+            method: 'DELETE',
+            headers: { 'X-User-Id': userId }
+        });
+        if (!response.ok) throw new Error('Failed to delete profile');
+        return await response.json();
+    }
+};

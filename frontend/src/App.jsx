@@ -1,11 +1,12 @@
 import DailyStrategy from './components/DailyStrategy'
-import { fetchDailyAnalysis } from './api'
+import { fetchDailyAnalysis, profileAPI } from './api'
 import { translations } from './utils/translations'
 
 import { useState, useEffect } from 'react'
 import TaskPlanner from './TaskPlanner'
 import StrategicAdvisor from './components/StrategicAdvisor'
 import ParticleBackground from './components/ParticleBackground'
+import ProfileManager from './components/ProfileManager'
 import { NumerologyEngine } from './utils/numerologyEngine'
 import { MayanEngine } from './utils/mayanEngine'
 import { JyotishEngine } from './utils/jyotishEngine'
@@ -13,9 +14,10 @@ import './App.css'
 import { supabase } from './supabaseClient';
 
 function App() {
-  const [profile, setProfile] = useState({ name: '', dob: '' })
+  const [profile, setProfile] = useState({ name: '', dob: '', birthTime: '', birthPlace: '', birthLat: null, birthLng: null })
   const [data, setData] = useState(null)
   const [user, setUser] = useState(null);
+  const [activeProfile, setActiveProfile] = useState(null);
   const [mayan, setMayan] = useState(null)
   const [jyotish, setJyotish] = useState(null)
 
@@ -32,17 +34,21 @@ function App() {
     if (!supabase) return; // Guard against missing keys
 
     // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user || null);
       if (session?.user) {
         setProfile(prev => ({ ...prev, name: session.user.user_metadata.full_name || '' }));
+        // Load active profile
+        await loadActiveProfile(session.user.id);
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user || null);
       if (session?.user) {
         setProfile(prev => ({ ...prev, name: session.user.user_metadata.full_name || '' }));
+        // Load active profile
+        await loadActiveProfile(session.user.id);
       }
     });
 
@@ -55,6 +61,44 @@ function App() {
       calculateDestiny();
     }
   }, [language]);
+
+  // Load active profile from backend
+  const loadActiveProfile = async (userId) => {
+    try {
+      const result = await profileAPI.getActiveProfile(userId);
+      if (result.profile) {
+        setActiveProfile(result.profile);
+        // Update profile state with saved data
+        setProfile({
+          name: result.profile.profile_name,
+          dob: result.profile.birth_date,
+          birthTime: result.profile.birth_time || '',
+          birthPlace: result.profile.birth_place || '',
+          birthLat: result.profile.birth_lat,
+          birthLng: result.profile.birth_lng
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load active profile:', error);
+    }
+  };
+
+  // Handle profile change from ProfileManager
+  const handleProfileChange = (newProfile) => {
+    setActiveProfile(newProfile);
+    if (newProfile) {
+      setProfile({
+        name: newProfile.profile_name,
+        dob: newProfile.birth_date,
+        birthTime: newProfile.birth_time || '',
+        birthPlace: newProfile.birth_place || '',
+        birthLat: newProfile.birth_lat,
+        birthLng: newProfile.birth_lng
+      });
+      // Auto-calculate with new profile
+      setTimeout(calculateDestiny, 100);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     if (!supabase) {
@@ -73,7 +117,8 @@ function App() {
     if (!supabase) return;
     await supabase.auth.signOut();
     setUser(null);
-    setProfile(prev => ({ ...prev, name: '' }));
+    setActiveProfile(null);
+    setProfile({ name: '', dob: '', birthTime: '', birthPlace: '', birthLat: null, birthLng: null });
   };
 
   const calculateDestiny = async () => {
@@ -315,22 +360,30 @@ function App() {
         </button>
 
         {user && (
-          <button
-            onClick={handleLogout}
-            style={{
-              background: 'rgba(255,255,255,0.1)',
-              color: '#d1d5db',
-              borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              border: 'none',
-              cursor: 'pointer',
-              marginLeft: '0.5rem'
-            }}
-            title="Sign Out"
-          >
-            ✕
-          </button>
+          <>
+            <ProfileManager
+              user={user}
+              activeProfile={activeProfile}
+              onProfileChange={handleProfileChange}
+              language={language}
+            />
+            <button
+              onClick={handleLogout}
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                color: '#d1d5db',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                border: 'none',
+                cursor: 'pointer',
+                marginLeft: '0.5rem'
+              }}
+              title="Sign Out"
+            >
+              ✕
+            </button>
+          </>
         )}
       </div>
 
@@ -496,6 +549,31 @@ function App() {
                 <h3 style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', marginBottom: '1rem', color: '#93c5fd' }}>
                   {t.jyotishTitle}
                 </h3>
+
+                {/* Birth Data Section */}
+                {profile.birthTime && profile.birthPlace && (
+                  <div style={{
+                    marginBottom: '1.5rem',
+                    padding: '1rem',
+                    background: 'rgba(147, 197, 253, 0.05)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(147, 197, 253, 0.2)'
+                  }}>
+                    <div style={{ fontSize: '0.75rem', opacity: 0.6, marginBottom: '0.5rem', textTransform: 'uppercase' }}>
+                      {t.birthData || 'Birth Data'}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.85rem' }}>
+                      <div><strong>{t.birthTime || 'Time'}:</strong> {profile.birthTime}</div>
+                      <div><strong>{t.birthPlace || 'Place'}:</strong> {profile.birthPlace}</div>
+                      {profile.birthLat && profile.birthLng && (
+                        <div style={{ fontSize: '0.75rem', opacity: 0.5 }}>
+                          {profile.birthLat.toFixed(2)}°, {profile.birthLng.toFixed(2)}°
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
                   <div className="stat">
