@@ -195,8 +195,16 @@ function App() {
     setAiError(null);
 
     try {
-      // Pass language to API
-      const analysis = await fetchDailyAnalysis(profile.dob, today.toISOString().split('T')[0], profile.name, language);
+      // Pass language and birth data to API
+      const analysis = await fetchDailyAnalysis(
+        profile.dob,
+        today.toISOString().split('T')[0],
+        profile.name,
+        language,
+        profile.birthTime || null,
+        profile.birthLat || null,
+        profile.birthLng || null
+      );
       if (analysis && analysis.strategy) {
         setAiStrategy(analysis.strategy);
       } else {

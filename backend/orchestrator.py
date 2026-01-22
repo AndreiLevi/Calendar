@@ -85,7 +85,7 @@ class StrategyOrchestrator:
            For example, if Moon is in {birth_chart.get('moon', {}).get('rashi')}, how does today's energy affect them personally?
         """
 
-        prompt += f"""
+        """
         GOAL:
         Write a single paragraph (3-4 sentences) Strategic Advice.
         - {lang_instruction}
@@ -93,6 +93,12 @@ class StrategyOrchestrator:
         - Combine the themes. Example: If Mayan is "Action" but Tithi is "Empty", advise "Cautious Action".
         - Be direct, empowering, and mystical but practical.
         """
+        
+        # LOGGING FOR USER DEBUGGING
+        print("="*50)
+        print("Generated Strategy Prompt:")
+        print(prompt)
+        print("="*50)
 
         try:
             response = self.client.chat.completions.create(

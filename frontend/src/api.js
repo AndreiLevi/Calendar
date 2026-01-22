@@ -4,14 +4,22 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 console.log("🚀 Frontend is connecting to Backend at:", API_URL);
 
-export const fetchDailyAnalysis = async (dob, date, name, language = 'ru') => {
+export const fetchDailyAnalysis = async (dob, date, name, language = 'ru', birthTime = null, latitude = null, longitude = null) => {
     try {
         const response = await fetch(`${API_URL}/api/analyze`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ dob, date, name, language }),
+            body: JSON.stringify({
+                dob,
+                date,
+                name,
+                language,
+                birth_time: birthTime,
+                latitude,
+                longitude
+            }),
         });
 
         if (!response.ok) {
