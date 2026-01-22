@@ -34,7 +34,8 @@ class StrategyOrchestrator:
                                   mayan: Dict, 
                                   jyotish: Dict, 
                                   user_name: str,
-                                  language: str = "ru") -> str:
+                                  language: str = "ru",
+                                  birth_chart: Dict = None) -> str:
         
         if not self.client:
             return "AI Key missing. Please set OPENROUTER_API_KEY in Railway to receive real insights."
@@ -71,7 +72,20 @@ class StrategyOrchestrator:
            - Tithi (Phase): {jyotish.get('tithi', {}).get('name')} ({jyotish.get('tithi', {}).get('paksha')})
            - Nakshatra: {jyotish.get('nakshatra', {}).get('name')}
            - Yoga: {jyotish.get('yoga', {}).get('name')}
+        """
 
+        if birth_chart:
+            prompt += f"""
+        4. NATAL CHART (User's Birth Context - TEST MODE):
+           - Ascendant (Lagna): {birth_chart.get('ascendant', {}).get('rashi')}
+           - Moon Sign (Rashi): {birth_chart.get('moon', {}).get('rashi')}
+           - Moon Nakshatra: {birth_chart.get('moon', {}).get('nakshatra')}
+           - Sun Sign: {birth_chart.get('sun', {}).get('rashi')}
+           IMPORTANT: Adapt the daily advice based on this natal context. 
+           For example, if Moon is in {birth_chart.get('moon', {}).get('rashi')}, how does today's energy affect them personally?
+        """
+
+        prompt += f"""
         GOAL:
         Write a single paragraph (3-4 sentences) Strategic Advice.
         - {lang_instruction}

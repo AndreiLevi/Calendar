@@ -42,6 +42,9 @@ class DateRequest(BaseModel):
     date: str
     name: str = "User"
     language: str = "ru" # Default to Russian
+    birth_time: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 class ProfileCreate(BaseModel):
     profile_name: str = "Main Profile"
@@ -97,6 +100,19 @@ def analyze_day(request: DateRequest):
         
         jyotish_data = jyotish_agent.calculate_panchanga(request.date)
 
+        # Calculate Birth Chart if data available
+        birth_chart = None
+        if request.birth_time and request.latitude and request.longitude:
+            try:
+                birth_chart = jyotish_agent.calculate_birth_chart(
+                    birth_date=request.dob,
+                    birth_time=request.birth_time,
+                    latitude=request.latitude,
+                    longitude=request.longitude
+                )
+            except Exception as e:
+                print(f"Error calculating birth chart for analysis: {e}")
+
         # 2. Synthesize with AI
         numerology_full = {"profile": num_profile, "daily_insight": num_insight}
         strategy_text = orchestrator.synthesize_daily_strategy(
@@ -104,7 +120,8 @@ def analyze_day(request: DateRequest):
             mayan=mayan_data,
             jyotish=jyotish_data,
             user_name=request.name,
-            language=request.language
+            language=request.language,
+            birth_chart=birth_chart
         )
 
         return {
