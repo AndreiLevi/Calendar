@@ -147,7 +147,15 @@ function App() {
 
     // Birth Chart calculation from backend if data available
     let birthChart = null;
+    console.log("Checking birth chart requirements:", {
+      time: profile.birthTime,
+      lat: profile.birthLat,
+      lng: profile.birthLng,
+      dob: profile.dob
+    });
+
     if (profile.birthTime && profile.birthLat && profile.birthLng) {
+      console.log("Fetching birth chart...");
       try {
         const result = await fetchBirthChart(
           profile.dob,
@@ -155,12 +163,17 @@ function App() {
           profile.birthLat,
           profile.birthLng
         );
+        console.log("Birth chart result:", result);
         if (result.success) {
           birthChart = result.chart;
+        } else {
+          console.error("Birth chart API returned success: false");
         }
       } catch (error) {
         console.error('Failed to fetch birth chart:', error);
       }
+    } else {
+      console.log("Skipping birth chart: missing data");
     }
 
     setJyotish({ today: todayJyotish, birth: birthChart });
