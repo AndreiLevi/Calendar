@@ -115,7 +115,7 @@ def analyze_day(request: DateRequest):
 
         # 2. Synthesize with AI
         numerology_full = {"profile": num_profile, "daily_insight": num_insight}
-        strategy_text = orchestrator.synthesize_daily_strategy(
+        result = orchestrator.synthesize_daily_strategy(
             numerology=numerology_full,
             mayan=mayan_data,
             jyotish=jyotish_data,
@@ -123,9 +123,18 @@ def analyze_day(request: DateRequest):
             language=request.language,
             birth_chart=birth_chart
         )
+        
+        # Handle backward compatibility if it returns just string (unlikely with recent change but safe)
+        if isinstance(result, dict):
+            strategy_text = result.get("strategy")
+            debug_prompt = result.get("debug_prompt")
+        else:
+            strategy_text = result
+            debug_prompt = "Not available"
 
         return {
             "strategy": strategy_text,
+            "debug_prompt": debug_prompt,
             "data": {
                 "numerology": numerology_full,
                 "mayan": mayan_data,

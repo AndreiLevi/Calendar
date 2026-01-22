@@ -108,6 +108,12 @@ class StrategyOrchestrator:
                     {"role": "user", "content": prompt}
                 ]
             )
-            return response.choices[0].message.content
+            return {
+                "strategy": response.choices[0].message.content,
+                "debug_prompt": prompt
+            }
         except Exception as e:
-            return f"Error gathering wisdom: {str(e)}"
+            return {
+                "strategy": f"Error gathering wisdom: {str(e)}",
+                "debug_prompt": prompt
+            }

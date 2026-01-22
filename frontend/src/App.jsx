@@ -207,6 +207,11 @@ function App() {
       );
       if (analysis && analysis.strategy) {
         setAiStrategy(analysis.strategy);
+        if (analysis.debug_prompt) {
+          console.log("🐛 AI PROMPT DEBUG INFO 🐛");
+          console.log(analysis.debug_prompt);
+          console.log("----------------------------");
+        }
       } else {
         // If we get here ensuring analysis is null/undefined means fallback or error
         setAiError("Оракул молчит. (Проверьте Backend/API Key)");
