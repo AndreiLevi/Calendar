@@ -7,3 +7,5 @@ openai
 google-generativeai
 pyswisseph
 supabase
+timezonefinder
+pytz

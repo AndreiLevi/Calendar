@@ -602,32 +602,56 @@ function App() {
                     borderRadius: '8px',
                     border: '1px solid rgba(147, 197, 253, 0.2)'
                   }}>
-                    <div style={{ fontSize: '0.75rem', opacity: 0.6, marginBottom: '0.5rem', textTransform: 'uppercase' }}>
-                      Natal Chart
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <div style={{ fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase' }}>
+                        Natal Chart
+                      </div>
+                      {jyotish.birth.timezone && (
+                        <div style={{ fontSize: '0.65rem', opacity: 0.4, fontFamily: 'monospace' }}>
+                          {jyotish.birth.timezone}
+                        </div>
+                      )}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.85rem' }}>
-                      <div>
-                        <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>Ascendant (Lagna)</div>
-                        <div style={{ fontWeight: 'bold' }}>{jyotish.birth.ascendant.rashi}</div>
-                        <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>{jyotish.birth.ascendant.degree}°</div>
+
+                    {/* Ascendant Table */}
+                    <div style={{
+                      marginBottom: '1rem',
+                      background: 'rgba(0,0,0,0.2)',
+                      borderRadius: '6px',
+                      padding: '0.75rem'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Ascendant (Lagna)</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{jyotish.birth.ascendant.rashi}</span>
                       </div>
-                      <div>
-                        <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>Moon Nakshatra</div>
-                        <div style={{ fontWeight: 'bold' }}>{jyotish.birth.moon.nakshatra}</div>
-                        <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>{jyotish.birth.moon.rashi}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', opacity: 0.7 }}>
+                        <span>{jyotish.birth.ascendant.nakshatra}</span>
+                        <span>{jyotish.birth.ascendant.rashi_degree}°</span>
                       </div>
-                      <div>
-                        <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>Sun Rashi</div>
-                        <div style={{ fontWeight: 'bold' }}>{jyotish.birth.sun.rashi}</div>
-                        <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>{jyotish.birth.sun.degree}°</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>Moon Rashi</div>
-                        <div style={{ fontWeight: 'bold' }}>{jyotish.birth.moon.rashi}</div>
-                        <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>{jyotish.birth.moon.degree}°</div>
-                      </div>
+                    </div>
+
+                    {/* Planets Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                      {Object.entries(jyotish.birth.grahas).map(([name, data]) => (
+                        <div key={name} style={{
+                          background: 'rgba(255,255,255,0.03)',
+                          padding: '0.5rem',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(255,255,255,0.05)'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '2px' }}>
+                            <span style={{ opacity: 0.8 }}>{name}</span>
+                            <span style={{ fontWeight: 'bold' }}>{data.rashi}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', opacity: 0.5 }}>
+                            <span>{data.nakshatra}</span>
+                            <span>{data.rashi_degree}°</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
+
                 )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

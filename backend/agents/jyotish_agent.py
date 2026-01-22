@@ -1,5 +1,7 @@
 import swisseph as swe
-from datetime import datetime, timezone
+from datetime import datetime
+import pytz
+from timezonefinder import TimezoneFinder
 from typing import Dict, Any
 
 class JyotishAgent:
@@ -12,6 +14,7 @@ class JyotishAgent:
     def __init__(self):
         # Set Sidereal Mode (Lahiri Ayanamsha)
         swe.set_sid_mode(swe.SIDM_LAHIRI)
+        self.tf = TimezoneFinder()
         
         self.NAKSHATRAS = [
             "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", 
@@ -41,11 +44,15 @@ class JyotishAgent:
         ]
 
     def _get_julian_day(self, date_str: str) -> float:
+        # Simple date parsing for Panchanga (assumes Noon UTC if no time)
         dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-        # Convert to UTC if not already
-        dt_utc = dt.astimezone(timezone.utc)
-        return swe.julday(dt_utc.year, dt_utc.month, dt_utc.day, 
-                          dt_utc.hour + dt_utc.minute/60.0 + dt_utc.second/3600.0)
+        if dt.tzinfo is None:
+             dt = dt.replace(tzinfo=pytz.UTC)
+        else:
+             dt = dt.astimezone(pytz.UTC)
+             
+        return swe.julday(dt.year, dt.month, dt.day, 
+                          dt.hour + dt.minute/60.0 + dt.second/3600.0)
 
     def calculate_panchanga(self, date_str: str) -> Dict[str, Any]:
         jd = self._get_julian_day(date_str)
@@ -98,6 +105,7 @@ class JyotishAgent:
     def calculate_birth_chart(self, birth_date: str, birth_time: str, latitude: float, longitude: float) -> Dict[str, Any]:
         """
         Calculate natal chart using birth time and location.
+        Automatically detects timezone to convert local birth time to UTC.
         
         Args:
             birth_date: Date in ISO format (YYYY-MM-DD)
@@ -108,50 +116,91 @@ class JyotishAgent:
         Returns:
             Dictionary with Ascendant, Moon Nakshatra, Rashis
         """
-        # Parse date and time
-        date_str = f"{birth_date}T{birth_time}:00Z"
-        dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-        dt_utc = dt.astimezone(timezone.utc)
+        # 1. Detect Timezone
+        timezone_str = self.tf.timezone_at(lng=longitude, lat=latitude)
+        if not timezone_str:
+            timezone_str = "UTC" # Fallback
+            
+        local_tz = pytz.timezone(timezone_str)
         
-        # Calculate Julian Day
+        # 2. Create Timezone-Aware Datetime (Local Time)
+        # Parse date components
+        year, month, day = map(int, birth_date.split('-'))
+        hour, minute = map(int, birth_time.split(':'))
+        
+        dt_local = local_tz.localize(datetime(year, month, day, hour, minute, 0))
+        
+        # 3. Convert to UTC
+        dt_utc = dt_local.astimezone(pytz.UTC)
+        
+        # 4. Calculate Julian Day
         jd = swe.julday(dt_utc.year, dt_utc.month, dt_utc.day, 
                         dt_utc.hour + dt_utc.minute/60.0 + dt_utc.second/3600.0)
+        
         
         # Calculate Houses (for Ascendant) - Placidus system
         houses_result = swe.houses(jd, latitude, longitude, b'P')
         ascendant_long = houses_result[0][0]  # Ascendant is 1st house cusp
         
-        # Calculate Moon and Sun positions
-        moon_res = swe.calc_ut(jd, swe.MOON, swe.FLG_SIDEREAL | swe.FLG_SWIEPH)
-        moon_long = moon_res[0][0]
-        
-        sun_res = swe.calc_ut(jd, swe.SUN, swe.FLG_SIDEREAL | swe.FLG_SWIEPH)
-        sun_long = sun_res[0][0]
-        
-        # Nakshatra
-        nakshatra_idx = int(moon_long / (360 / 27))
-        nakshatra_name = self.NAKSHATRAS[nakshatra_idx % 27]
+        # Calculate All Planets (Grahas)
+        # Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Rahu (Mean Node), Ketu (Opposite Node)
+        planets_map = {
+            "Sun": swe.SUN,
+            "Moon": swe.MOON,
+            "Mars": swe.MARS,
+            "Mercury": swe.MERCURY,
+            "Jupiter": swe.JUPITER,
+            "Venus": swe.VENUS,
+            "Saturn": swe.SATURN,
+            "Rahu": swe.MEAN_NODE # Mean North Node
+        }
         
         # Rashis (zodiac signs)
         rashis = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
                   "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
         
+        grahas = {}
+        
+        for name, planet_id in planets_map.items():
+            res = swe.calc_ut(jd, planet_id, swe.FLG_SIDEREAL | swe.FLG_SWIEPH)
+            long = res[0][0]
+            rashi_idx = int(long / 30)
+            
+            # Calculate Nakshatra for all planets
+            nakshatra_idx = int(long / (360 / 27))
+            nakshatra_name = self.NAKSHATRAS[nakshatra_idx % 27]
+            
+            grahas[name] = {
+                "degree": round(long, 2),
+                "rashi": rashis[rashi_idx % 12],
+                "rashi_degree": round(long % 30, 2),
+                "nakshatra": nakshatra_name
+            }
+            
+        # Calculate Ketu (always 180 degrees from Rahu)
+        rahu_long = grahas["Rahu"]["degree"]
+        ketu_long = (rahu_long + 180) % 360
+        ketu_rashi_idx = int(ketu_long / 30)
+        ketu_nakshatra_idx = int(ketu_long / (360 / 27))
+        
+        grahas["Ketu"] = {
+            "degree": round(ketu_long, 2),
+            "rashi": rashis[ketu_rashi_idx % 12],
+            "rashi_degree": round(ketu_long % 30, 2),
+            "nakshatra": self.NAKSHATRAS[ketu_nakshatra_idx % 27]
+        }
+        
         ascendant_rashi_idx = int(ascendant_long / 30)
-        moon_rashi_idx = int(moon_long / 30)
-        sun_rashi_idx = int(sun_long / 30)
+        ascendant_nakshatra_idx = int(ascendant_long / (360 / 27))
         
         return {
+            "timezone": timezone_str,
+            "utc_time": dt_utc.isoformat(),
             "ascendant": {
                 "degree": round(ascendant_long, 2),
-                "rashi": rashis[ascendant_rashi_idx % 12]
+                "rashi": rashis[ascendant_rashi_idx % 12],
+                "rashi_degree": round(ascendant_long % 30, 2),
+                "nakshatra": self.NAKSHATRAS[ascendant_nakshatra_idx % 27]
             },
-            "moon": {
-                "degree": round(moon_long, 2),
-                "nakshatra": nakshatra_name,
-                "rashi": rashis[moon_rashi_idx % 12]
-            },
-            "sun": {
-                "degree": round(sun_long, 2),
-                "rashi": rashis[sun_rashi_idx % 12]
-            }
+            "grahas": grahas
         }
