@@ -631,25 +631,31 @@ function App() {
                     </div>
 
                     {/* Planets Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                      {Object.entries(jyotish.birth.grahas).map(([name, data]) => (
-                        <div key={name} style={{
-                          background: 'rgba(255,255,255,0.03)',
-                          padding: '0.5rem',
-                          borderRadius: '4px',
-                          border: '1px solid rgba(255,255,255,0.05)'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '2px' }}>
-                            <span style={{ opacity: 0.8 }}>{name}</span>
-                            <span style={{ fontWeight: 'bold' }}>{data.rashi}</span>
+                    {jyotish.birth.grahas ? (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                        {Object.entries(jyotish.birth.grahas).map(([name, data]) => (
+                          <div key={name} style={{
+                            background: 'rgba(255,255,255,0.03)',
+                            padding: '0.5rem',
+                            borderRadius: '4px',
+                            border: '1px solid rgba(255,255,255,0.05)'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '2px' }}>
+                              <span style={{ opacity: 0.8 }}>{name}</span>
+                              <span style={{ fontWeight: 'bold' }}>{data.rashi}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', opacity: 0.5 }}>
+                              <span>{data.nakshatra}</span>
+                              <span>{data.rashi_degree}°</span>
+                            </div>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', opacity: 0.5 }}>
-                            <span>{data.nakshatra}</span>
-                            <span>{data.rashi_degree}°</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.8rem', opacity: 0.7, padding: '1rem', textAlign: 'center' }}>
+                        Wait for Backend update... (Grahas missing)
+                      </div>
+                    )}
                   </div>
 
                 )}
