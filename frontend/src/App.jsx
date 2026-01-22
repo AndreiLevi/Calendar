@@ -619,6 +619,23 @@ function App() {
                   </div>
                 )}
 
+                {/* Error Display for Debugging */}
+                {jyotish.error && (
+                  <div style={{
+                    marginBottom: '1.5rem',
+                    padding: '1rem',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: '#fca5a5',
+                    fontSize: '0.8rem',
+                    wordBreak: 'break-word'
+                  }}>
+                    <strong>Backend Error:</strong><br />
+                    {jyotish.error}
+                  </div>
+                )}
+
                 {/* Birth Chart Section */}
                 {jyotish.birth && (
                   <div style={{

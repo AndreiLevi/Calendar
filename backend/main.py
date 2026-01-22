@@ -158,7 +158,12 @@ def calculate_birth_chart(request: BirthChartRequest):
     except Exception as e:
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        # Return error as JSON instead of 500 for better visibility in Frontend
+        return {
+            "success": False, 
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
 
 @app.get("/api/debug-jyotish")
 def debug_jyotish():
