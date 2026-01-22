@@ -144,7 +144,12 @@ class JyotishAgent:
             # 2. Create Timezone-Aware Datetime (Local Time)
             # Parse date components
             year, month, day = map(int, birth_date.split('-'))
-            hour, minute = map(int, birth_time.split(':'))
+            
+            # Handle time formats: "HH:MM" or "HH:MM:SS"
+            time_parts = list(map(int, birth_time.split(':')))
+            hour = time_parts[0]
+            minute = time_parts[1]
+            # Ignore seconds if present
             
             dt_local = local_tz.localize(datetime(year, month, day, hour, minute, 0))
             
