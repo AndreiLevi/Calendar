@@ -130,7 +130,25 @@ def calculate_birth_chart(request: BirthChartRequest):
         )
         return {"success": True, "chart": chart_data}
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/debug-jyotish")
+def debug_jyotish():
+    """Manual trigger to test Birth Chart Calculation and see traceback"""
+    try:
+        # Test Case: Moscow, 2000-01-01 12:00
+        result = jyotish_agent.calculate_birth_chart(
+            birth_date="2000-01-01",
+            birth_time="12:00",
+            latitude=55.7558,
+            longitude=37.6173
+        )
+        return {"status": "success", "result": result}
+    except Exception as e:
+        import traceback
+        return {"status": "error", "message": str(e), "traceback": traceback.format_exc()}
 
 # Profile Management Endpoints
 
