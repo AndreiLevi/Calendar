@@ -1,5 +1,5 @@
 import DailyStrategy from './components/DailyStrategy'
-import { fetchDailyAnalysis, profileAPI } from './api'
+import { fetchDailyAnalysis, profileAPI, fetchBirthChart } from './api'
 import { translations } from './utils/translations'
 
 import { useState, useEffect } from 'react'
@@ -144,7 +144,26 @@ function App() {
 
     // Jyotish Calculations
     const todayJyotish = JyotishEngine.calculatePanchanga(today.toISOString().split('T')[0], language);
-    setJyotish(todayJyotish);
+
+    // Birth Chart calculation from backend if data available
+    let birthChart = null;
+    if (profile.birthTime && profile.birthLat && profile.birthLng) {
+      try {
+        const result = await fetchBirthChart(
+          profile.dob,
+          profile.birthTime,
+          profile.birthLat,
+          profile.birthLng
+        );
+        if (result.success) {
+          birthChart = result.chart;
+        }
+      } catch (error) {
+        console.error('Failed to fetch birth chart:', error);
+      }
+    }
+
+    setJyotish({ today: todayJyotish, birth: birthChart });
 
     setData({
       active: true,
@@ -574,34 +593,71 @@ function App() {
                   </div>
                 )}
 
+                {/* Birth Chart Section */}
+                {jyotish.birth && (
+                  <div style={{
+                    marginBottom: '1.5rem',
+                    padding: '1rem',
+                    background: 'rgba(147, 197, 253, 0.05)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(147, 197, 253, 0.2)'
+                  }}>
+                    <div style={{ fontSize: '0.75rem', opacity: 0.6, marginBottom: '0.5rem', textTransform: 'uppercase' }}>
+                      Natal Chart
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.85rem' }}>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>Ascendant (Lagna)</div>
+                        <div style={{ fontWeight: 'bold' }}>{jyotish.birth.ascendant.rashi}</div>
+                        <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>{jyotish.birth.ascendant.degree}°</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>Moon Nakshatra</div>
+                        <div style={{ fontWeight: 'bold' }}>{jyotish.birth.moon.nakshatra}</div>
+                        <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>{jyotish.birth.moon.rashi}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>Sun Rashi</div>
+                        <div style={{ fontWeight: 'bold' }}>{jyotish.birth.sun.rashi}</div>
+                        <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>{jyotish.birth.sun.degree}°</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>Moon Rashi</div>
+                        <div style={{ fontWeight: 'bold' }}>{jyotish.birth.moon.rashi}</div>
+                        <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>{jyotish.birth.moon.degree}°</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
                   <div className="stat">
                     <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{t.vara}</span>
-                    <span style={{ fontWeight: 'bold' }}>{jyotish.vara.day}</span>
-                    <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{jyotish.vara.planet}</span>
+                    <span style={{ fontWeight: 'bold' }}>{jyotish.today.vara.day}</span>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{jyotish.today.vara.planet}</span>
                   </div>
 
                   <div className="stat">
                     <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{t.tithi}</span>
-                    <span style={{ fontWeight: 'bold' }}>{jyotish.tithi.name}</span>
-                    <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{jyotish.tithi.paksha}</span>
+                    <span style={{ fontWeight: 'bold' }}>{jyotish.today.tithi.name}</span>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{jyotish.today.tithi.paksha}</span>
                   </div>
 
                   <div className="stat">
                     <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{t.nakshatra}</span>
-                    <span style={{ fontWeight: 'bold' }}>{jyotish.nakshatra.name}</span>
-                    <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{jyotish.nakshatra.deity}</span>
+                    <span style={{ fontWeight: 'bold' }}>{jyotish.today.nakshatra.name}</span>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>{jyotish.today.nakshatra.deity}</span>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div className="stat">
                       <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{t.yoga}</span>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{jyotish.yoga}</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{jyotish.today.yoga}</span>
                     </div>
                     <div className="stat">
                       <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>{t.karana}</span>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{jyotish.karana}</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{jyotish.today.karana}</span>
                     </div>
                   </div>
 

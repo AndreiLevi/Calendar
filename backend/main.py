@@ -63,6 +63,12 @@ class ProfileUpdate(BaseModel):
     birth_timezone: Optional[str] = None
     is_active: Optional[bool] = None
 
+class BirthChartRequest(BaseModel):
+    birth_date: str
+    birth_time: str
+    latitude: float
+    longitude: float
+
 @app.get("/")
 def health_check():
     return {"status": "ok", "service": "Calendar Orchestrator"}
@@ -109,6 +115,20 @@ def analyze_day(request: DateRequest):
                 "jyotish": jyotish_data
             }
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/birth-chart")
+def calculate_birth_chart(request: BirthChartRequest):
+    """Calculate natal chart using birth time and location"""
+    try:
+        chart_data = jyotish_agent.calculate_birth_chart(
+            birth_date=request.birth_date,
+            birth_time=request.birth_time,
+            latitude=request.latitude,
+            longitude=request.longitude
+        )
+        return {"success": True, "chart": chart_data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

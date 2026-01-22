@@ -94,3 +94,64 @@ class JyotishAgent:
                 "name": yoga_name
             }
         }
+
+    def calculate_birth_chart(self, birth_date: str, birth_time: str, latitude: float, longitude: float) -> Dict[str, Any]:
+        """
+        Calculate natal chart using birth time and location.
+        
+        Args:
+            birth_date: Date in ISO format (YYYY-MM-DD)
+            birth_time: Time in HH:MM format (24-hour)
+            latitude: Latitude in decimal degrees
+            longitude: Longitude in decimal degrees
+            
+        Returns:
+            Dictionary with Ascendant, Moon Nakshatra, Rashis
+        """
+        # Parse date and time
+        date_str = f"{birth_date}T{birth_time}:00Z"
+        dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        dt_utc = dt.astimezone(timezone.utc)
+        
+        # Calculate Julian Day
+        jd = swe.julday(dt_utc.year, dt_utc.month, dt_utc.day, 
+                        dt_utc.hour + dt_utc.minute/60.0 + dt_utc.second/3600.0)
+        
+        # Calculate Houses (for Ascendant) - Placidus system
+        houses_result = swe.houses(jd, latitude, longitude, b'P')
+        ascendant_long = houses_result[0][0]  # Ascendant is 1st house cusp
+        
+        # Calculate Moon and Sun positions
+        moon_res = swe.calc_ut(jd, swe.MOON, swe.FLG_SIDEREAL | swe.FLG_SWIEPH)
+        moon_long = moon_res[0][0]
+        
+        sun_res = swe.calc_ut(jd, swe.SUN, swe.FLG_SIDEREAL | swe.FLG_SWIEPH)
+        sun_long = sun_res[0][0]
+        
+        # Nakshatra
+        nakshatra_idx = int(moon_long / (360 / 27))
+        nakshatra_name = self.NAKSHATRAS[nakshatra_idx % 27]
+        
+        # Rashis (zodiac signs)
+        rashis = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+                  "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
+        
+        ascendant_rashi_idx = int(ascendant_long / 30)
+        moon_rashi_idx = int(moon_long / 30)
+        sun_rashi_idx = int(sun_long / 30)
+        
+        return {
+            "ascendant": {
+                "degree": round(ascendant_long, 2),
+                "rashi": rashis[ascendant_rashi_idx % 12]
+            },
+            "moon": {
+                "degree": round(moon_long, 2),
+                "nakshatra": nakshatra_name,
+                "rashi": rashis[moon_rashi_idx % 12]
+            },
+            "sun": {
+                "degree": round(sun_long, 2),
+                "rashi": rashis[sun_rashi_idx % 12]
+            }
+        }
