@@ -88,15 +88,15 @@ export const profileAPI = {
     }
 };
 export async function fetchBirthChart(birthDate, birthTime, latitude, longitude) {
-  const res = await fetch(${""}/api/birth-chart, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      birth_date: birthDate,
-      birth_time: birthTime,
-      latitude,
-      longitude
-    })
-  });
-  return res.json();
+    const res = await fetch(`${API_URL}/api/birth-chart`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            birth_date: birthDate,
+            birth_time: birthTime,
+            latitude,
+            longitude
+        })
+    });
+    return res.json();
 }
