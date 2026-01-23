@@ -124,6 +124,15 @@ function App() {
   const calculateDestiny = async () => {
     if (!profile.dob) return
 
+    // Fix: Use Local Date instead of UTC to avoid "yesterday" issues in positive timezones
+    const getLocalDateString = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    const localDateStr = getLocalDateString(today);
+
     // Core Calculations
     const currentYear = today.getFullYear()
     const currentMonth = today.getMonth() + 1
@@ -131,19 +140,19 @@ function App() {
 
     const lifePath = NumerologyEngine.calculateLifePath(profile.dob)
     const personalYear = NumerologyEngine.calculatePersonalYear(profile.dob, currentYear)
-    const dailyVibration = NumerologyEngine.calculateDailyVibration(profile.dob, today.toISOString().split('T')[0])
+    const dailyVibration = NumerologyEngine.calculateDailyVibration(profile.dob, localDateStr)
 
-    const universalDay = NumerologyEngine.calculateUniversalDay(today.toISOString().split('T')[0])
+    const universalDay = NumerologyEngine.calculateUniversalDay(localDateStr)
     const personalMonth = NumerologyEngine.calculatePersonalMonth(profile.dob, currentYear, currentMonth)
     const personalWeek = NumerologyEngine.calculatePersonalWeek(profile.dob, currentYear, currentMonth, currentWeek)
 
     // Mayan Calculations
     const birthMayan = MayanEngine.calculateTzolkin(profile.dob, language);
-    const todayMayan = MayanEngine.calculateTzolkin(today.toISOString().split('T')[0], language);
+    const todayMayan = MayanEngine.calculateTzolkin(localDateStr, language);
     setMayan({ birth: birthMayan, today: todayMayan });
 
     // Jyotish Calculations
-    const todayJyotish = JyotishEngine.calculatePanchanga(today.toISOString().split('T')[0], language);
+    const todayJyotish = JyotishEngine.calculatePanchanga(localDateStr, language);
 
     // Birth Chart calculation from backend if data available
     let birthChart = null;
@@ -198,7 +207,7 @@ function App() {
       // Pass language and birth data to API
       const analysis = await fetchDailyAnalysis(
         profile.dob,
-        today.toISOString().split('T')[0],
+        localDateStr,
         profile.name,
         language,
         profile.birthTime || null,
