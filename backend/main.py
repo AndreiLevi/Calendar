@@ -10,10 +10,28 @@ from typing import Optional, Dict, Any
 from agents.numerology_expert import NumerologyExpertAgent
 from agents.mayan_agent import MayanAgent
 from agents.jyotish_agent import JyotishAgent
-from agents.muhurtas_agent import MuhurtasAgent
-from agents.transits_agent import TransitsAgent
 from orchestrator import StrategyOrchestrator
 from services.profile_service import ProfileService
+
+# Try to import pyswisseph-dependent agents
+try:
+    from agents.muhurtas_agent import MuhurtasAgent
+    from agents.transits_agent import TransitsAgent
+    SWISSEPH_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: pyswisseph not available, muhurtas and transits disabled: {e}")
+    MuhurtasAgent = None
+    TransitsAgent = None
+    SWISSEPH_AVAILABLE = False
+
+# Try to import task service (may fail if tables don't exist)
+try:
+    from services.task_service import TaskService, TaskCreate, TaskUpdate, TaskStatus, TaskType
+    TASK_SERVICE_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: TaskService import failed: {e}")
+    TaskService = None
+    TASK_SERVICE_AVAILABLE = False
 
 app = FastAPI(title="Calendar Orchestrator API")
 
@@ -30,9 +48,11 @@ app.add_middleware(
 numerology_agent = NumerologyExpertAgent()
 mayan_agent = MayanAgent()
 jyotish_agent = JyotishAgent()
-muhurtas_agent = MuhurtasAgent()
-transits_agent = TransitsAgent()
 orchestrator = StrategyOrchestrator()
+
+# Initialize pyswisseph-dependent agents (only if available)
+muhurtas_agent = MuhurtasAgent() if SWISSEPH_AVAILABLE and MuhurtasAgent else None
+transits_agent = TransitsAgent() if SWISSEPH_AVAILABLE and TransitsAgent else None
 
 # Initialize Profile Service
 try:
@@ -40,6 +60,14 @@ try:
 except ValueError as e:
     print(f"Warning: ProfileService not initialized: {e}")
     profile_service = None
+
+# Initialize Task Service
+task_service = None
+if TASK_SERVICE_AVAILABLE and TaskService:
+    try:
+        task_service = TaskService()
+    except ValueError as e:
+        print(f"Warning: TaskService not initialized: {e}")
 
 class DateRequest(BaseModel):
     dob: str
@@ -78,7 +106,17 @@ class BirthChartRequest(BaseModel):
 
 @app.get("/")
 def health_check():
-    return {"status": "ok", "service": "Calendar Orchestrator"}
+    return {
+        "status": "ok", 
+        "service": "Calendar Orchestrator",
+        "services": {
+            "profile": profile_service is not None,
+            "tasks": task_service is not None,
+            "muhurtas": muhurtas_agent is not None,
+            "transits": transits_agent is not None,
+            "pyswisseph": SWISSEPH_AVAILABLE
+        }
+    }
 
 class MuhurtasRequest(BaseModel):
     latitude: float
@@ -89,6 +127,9 @@ class MuhurtasRequest(BaseModel):
 @app.post("/api/muhurtas")
 def get_muhurtas(request: MuhurtasRequest):
     """Get planetary hours (Hora), Rahu Kala, Brahma Muhurta for given location"""
+    if not muhurtas_agent:
+        raise HTTPException(status_code=503, detail="Muhurtas service unavailable (pyswisseph not installed)")
+    
     from datetime import datetime, timezone
     
     try:
@@ -112,6 +153,9 @@ def get_muhurtas(request: MuhurtasRequest):
 @app.get("/api/hora")
 def get_current_hora(latitude: float, longitude: float, language: str = "ru"):
     """Quick endpoint to get just the current planetary hour"""
+    if not muhurtas_agent:
+        raise HTTPException(status_code=503, detail="Hora service unavailable (pyswisseph not installed)")
+    
     from datetime import datetime, timezone
     
     try:
@@ -124,6 +168,9 @@ def get_current_hora(latitude: float, longitude: float, language: str = "ru"):
 @app.get("/api/transits")
 def get_transits(language: str = "ru"):
     """Get current planetary positions (transits)"""
+    if not transits_agent:
+        raise HTTPException(status_code=503, detail="Transits service unavailable (pyswisseph not installed)")
+    
     from datetime import datetime, timezone
     
     try:
@@ -336,5 +383,190 @@ async def get_logs(user_id: str = Header(..., alias="X-User-Id"), limit: int = 5
     try:
         logs = await profile_service.get_recent_logs(user_id, limit)
         return {"logs": logs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== TASK MANAGEMENT ====================
+
+class TaskCreateRequest(BaseModel):
+    title: str
+    description: Optional[str] = None
+    task_type: str = "flexible"  # rigid, flexible, recurring, intention
+    scheduled_at: Optional[str] = None
+    due_date: Optional[str] = None
+    estimated_duration: Optional[int] = None
+    project_id: Optional[str] = None
+    life_sphere: Optional[str] = None
+
+class TaskUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    task_type: Optional[str] = None
+    status: Optional[str] = None
+    scheduled_at: Optional[str] = None
+    due_date: Optional[str] = None
+    estimated_duration: Optional[int] = None
+    project_id: Optional[str] = None
+    life_sphere: Optional[str] = None
+
+@app.get("/api/tasks")
+async def get_tasks(
+    user_id: str = Header(..., alias="X-User-Id"),
+    status: Optional[str] = None,
+    task_type: Optional[str] = None,
+    life_sphere: Optional[str] = None,
+    project_id: Optional[str] = None,
+    limit: int = 100
+):
+    """Get user's tasks with optional filters"""
+    if not task_service:
+        raise HTTPException(status_code=503, detail="Task service unavailable")
+    try:
+        status_enum = TaskStatus(status) if status else None
+        type_enum = TaskType(task_type) if task_type else None
+        tasks = await task_service.get_tasks(
+            user_id, status_enum, type_enum, life_sphere, project_id, limit
+        )
+        return {"tasks": tasks}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/tasks")
+async def create_task(
+    request: TaskCreateRequest,
+    user_id: str = Header(..., alias="X-User-Id")
+):
+    """Create a new task"""
+    if not task_service:
+        raise HTTPException(status_code=503, detail="Task service unavailable")
+    try:
+        from datetime import datetime, date as date_type
+        task_data = TaskCreate(
+            title=request.title,
+            description=request.description,
+            task_type=TaskType(request.task_type),
+            scheduled_at=datetime.fromisoformat(request.scheduled_at) if request.scheduled_at else None,
+            due_date=date_type.fromisoformat(request.due_date) if request.due_date else None,
+            estimated_duration=request.estimated_duration,
+            project_id=request.project_id,
+            life_sphere=request.life_sphere
+        )
+        task = await task_service.create_task(user_id, task_data)
+        return {"success": True, "task": task}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/tasks/{task_id}")
+async def get_task(
+    task_id: str,
+    user_id: str = Header(..., alias="X-User-Id")
+):
+    """Get a single task"""
+    if not task_service:
+        raise HTTPException(status_code=503, detail="Task service unavailable")
+    try:
+        task = await task_service.get_task(user_id, task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        return {"task": task}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/tasks/{task_id}")
+async def update_task(
+    task_id: str,
+    request: TaskUpdateRequest,
+    user_id: str = Header(..., alias="X-User-Id")
+):
+    """Update a task"""
+    if not task_service:
+        raise HTTPException(status_code=503, detail="Task service unavailable")
+    try:
+        from datetime import datetime, date as date_type
+        updates = TaskUpdate(
+            title=request.title,
+            description=request.description,
+            task_type=TaskType(request.task_type) if request.task_type else None,
+            status=TaskStatus(request.status) if request.status else None,
+            scheduled_at=datetime.fromisoformat(request.scheduled_at) if request.scheduled_at else None,
+            due_date=date_type.fromisoformat(request.due_date) if request.due_date else None,
+            estimated_duration=request.estimated_duration,
+            project_id=request.project_id,
+            life_sphere=request.life_sphere
+        )
+        task = await task_service.update_task(user_id, task_id, updates)
+        return {"success": True, "task": task}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/tasks/{task_id}")
+async def delete_task(
+    task_id: str,
+    user_id: str = Header(..., alias="X-User-Id")
+):
+    """Delete a task"""
+    if not task_service:
+        raise HTTPException(status_code=503, detail="Task service unavailable")
+    try:
+        await task_service.delete_task(user_id, task_id)
+        return {"success": True, "message": "Task deleted"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/tasks/{task_id}/complete")
+async def complete_task(
+    task_id: str,
+    user_id: str = Header(..., alias="X-User-Id")
+):
+    """Mark a task as completed"""
+    if not task_service:
+        raise HTTPException(status_code=503, detail="Task service unavailable")
+    try:
+        task = await task_service.complete_task(user_id, task_id)
+        return {"success": True, "task": task}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/tasks/{task_id}/start")
+async def start_task(
+    task_id: str,
+    user_id: str = Header(..., alias="X-User-Id")
+):
+    """Mark a task as in progress"""
+    if not task_service:
+        raise HTTPException(status_code=503, detail="Task service unavailable")
+    try:
+        task = await task_service.start_task(user_id, task_id)
+        return {"success": True, "task": task}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/tasks/{task_id}/snooze")
+async def snooze_task(
+    task_id: str,
+    snooze_until: Optional[str] = None,
+    user_id: str = Header(..., alias="X-User-Id")
+):
+    """Snooze a task"""
+    if not task_service:
+        raise HTTPException(status_code=503, detail="Task service unavailable")
+    try:
+        from datetime import datetime
+        snooze_dt = datetime.fromisoformat(snooze_until) if snooze_until else None
+        task = await task_service.snooze_task(user_id, task_id, snooze_dt)
+        return {"success": True, "task": task}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/tasks/today")
+async def get_today_tasks(user_id: str = Header(..., alias="X-User-Id")):
+    """Get pending tasks for today"""
+    if not task_service:
+        raise HTTPException(status_code=503, detail="Task service unavailable")
+    try:
+        tasks = await task_service.get_pending_tasks_for_today(user_id)
+        return {"tasks": tasks}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
