@@ -10,6 +10,8 @@ from typing import Optional, Dict, Any
 from agents.numerology_expert import NumerologyExpertAgent
 from agents.mayan_agent import MayanAgent
 from agents.jyotish_agent import JyotishAgent
+from agents.muhurtas_agent import MuhurtasAgent
+from agents.transits_agent import TransitsAgent
 from orchestrator import StrategyOrchestrator
 from services.profile_service import ProfileService
 
@@ -28,6 +30,8 @@ app.add_middleware(
 numerology_agent = NumerologyExpertAgent()
 mayan_agent = MayanAgent()
 jyotish_agent = JyotishAgent()
+muhurtas_agent = MuhurtasAgent()
+transits_agent = TransitsAgent()
 orchestrator = StrategyOrchestrator()
 
 # Initialize Profile Service
@@ -75,6 +79,66 @@ class BirthChartRequest(BaseModel):
 @app.get("/")
 def health_check():
     return {"status": "ok", "service": "Calendar Orchestrator"}
+
+class MuhurtasRequest(BaseModel):
+    latitude: float
+    longitude: float
+    datetime_str: Optional[str] = None  # ISO format, defaults to now
+    language: str = "ru"
+
+@app.post("/api/muhurtas")
+def get_muhurtas(request: MuhurtasRequest):
+    """Get planetary hours (Hora), Rahu Kala, Brahma Muhurta for given location"""
+    from datetime import datetime, timezone
+    
+    try:
+        if request.datetime_str:
+            dt = datetime.fromisoformat(request.datetime_str.replace('Z', '+00:00'))
+        else:
+            dt = datetime.now(timezone.utc)
+        
+        result = muhurtas_agent.get_all_muhurtas(
+            dt, 
+            request.latitude, 
+            request.longitude, 
+            request.language
+        )
+        return {"success": True, "data": result}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/hora")
+def get_current_hora(latitude: float, longitude: float, language: str = "ru"):
+    """Quick endpoint to get just the current planetary hour"""
+    from datetime import datetime, timezone
+    
+    try:
+        dt = datetime.now(timezone.utc)
+        hora = muhurtas_agent.get_current_hora(dt, latitude, longitude, language)
+        return {"success": True, "hora": hora}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/transits")
+def get_transits(language: str = "ru"):
+    """Get current planetary positions (transits)"""
+    from datetime import datetime, timezone
+    
+    try:
+        dt = datetime.now(timezone.utc)
+        positions = transits_agent.get_current_positions(dt, language)
+        significant = transits_agent.get_significant_transits(dt, language)
+        return {
+            "success": True,
+            "positions": positions,
+            "significant_transits": significant
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/numerology")
 def get_numerology(request: DateRequest):
