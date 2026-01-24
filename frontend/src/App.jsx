@@ -97,6 +97,15 @@ function App() {
     return () => subscription.unsubscribe();
   }, [contextProfile]);
 
+  // Auto-recalculate when returning to Dashboard with existing profile
+  // This fixes the issue where data is lost when navigating away and back
+  useEffect(() => {
+    if (profile.dob && !data?.active) {
+      console.log('Profile exists but no data, auto-calculating...');
+      calculateDestiny();
+    }
+  }, [profile.dob]);
+
   // Auto-refresh when language changes
   useEffect(() => {
     if (data?.active && profile.dob) {
