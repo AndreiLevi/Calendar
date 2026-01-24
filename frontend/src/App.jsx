@@ -3,6 +3,7 @@ import { fetchDailyAnalysis, profileAPI, fetchBirthChart } from './api'
 import { translations } from './utils/translations'
 
 import { useState, useEffect } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import TaskPlanner from './TaskPlanner'
 import StrategicAdvisor from './components/StrategicAdvisor'
 import ParticleBackground from './components/ParticleBackground'
@@ -14,9 +15,15 @@ import './App.css'
 import { supabase } from './supabaseClient';
 
 function App() {
+  // Try to get context from Layout (when used as routed page)
+  const outletContext = useOutletContext() || {};
+  const contextUser = outletContext.user;
+  const contextLanguage = outletContext.language;
+  const contextSetLanguage = outletContext.setLanguage;
+
   const [profile, setProfile] = useState({ name: '', dob: '', birthTime: '', birthPlace: '', birthLat: null, birthLng: null })
   const [data, setData] = useState(null)
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(contextUser || null);
   const [activeProfile, setActiveProfile] = useState(null);
   const [mayan, setMayan] = useState(null)
   const [jyotish, setJyotish] = useState(null)
@@ -28,7 +35,15 @@ function App() {
 
   // Current date state
   const [today] = useState(new Date())
-  const [language, setLanguage] = useState('ru') // 'ru', 'en', 'he'
+  // Use context language if available, otherwise local state
+  const [localLanguage, setLocalLanguage] = useState('ru')
+  const language = contextLanguage || localLanguage;
+  const setLanguage = contextSetLanguage || setLocalLanguage;
+
+  // Sync user from context
+  useEffect(() => {
+    if (contextUser) setUser(contextUser);
+  }, [contextUser]);
 
   useEffect(() => {
     if (!supabase) return; // Guard against missing keys
@@ -241,51 +256,22 @@ function App() {
   const t = translations[language];
   const isRtl = language === 'he';
 
-  return (
-    <div className="calendar-container" dir={isRtl ? 'rtl' : 'ltr'}>
-      <ParticleBackground intensity={data?.intensity || 1} />
+  // Check if we're inside Layout (has context) - don't render duplicate elements
+  const isInsideLayout = !!outletContext.language;
 
-      <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem', zIndex: 10 }}>
-        <button
-          onClick={() => setLanguage('ru')}
-          style={{
-            opacity: language === 'ru' ? 1 : 0.5,
-            cursor: 'pointer',
-            background: 'transparent',
-            border: '1px solid white',
-            color: 'white',
-            borderRadius: '4px',
-            padding: '2px 6px'
-          }}>
-          RU
-        </button>
-        <button
-          onClick={() => setLanguage('en')}
-          style={{
-            opacity: language === 'en' ? 1 : 0.5,
-            cursor: 'pointer',
-            background: 'transparent',
-            border: '1px solid white',
-            color: 'white',
-            borderRadius: '4px',
-            padding: '2px 6px'
-          }}>
-          EN
-        </button>
-        <button
-          onClick={() => setLanguage('he')}
-          style={{
-            opacity: language === 'he' ? 1 : 0.5,
-            cursor: 'pointer',
-            background: 'transparent',
-            border: '1px solid white',
-            color: 'white',
-            borderRadius: '4px',
-            padding: '2px 6px'
-          }}>
-          HE
-        </button>
-      </div>
+  return (
+    <div className={isInsideLayout ? "dashboard-page" : "calendar-container"} dir={isRtl ? 'rtl' : 'ltr'}>
+      {/* Only render ParticleBackground if NOT inside Layout */}
+      {!isInsideLayout && <ParticleBackground intensity={data?.intensity || 1} />}
+
+      {/* Only render language switcher if NOT inside Layout */}
+      {!isInsideLayout && (
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem', zIndex: 10 }}>
+          <button onClick={() => setLanguage('ru')} style={{ opacity: language === 'ru' ? 1 : 0.5, cursor: 'pointer', background: 'transparent', border: '1px solid white', color: 'white', borderRadius: '4px', padding: '2px 6px' }}>RU</button>
+          <button onClick={() => setLanguage('en')} style={{ opacity: language === 'en' ? 1 : 0.5, cursor: 'pointer', background: 'transparent', border: '1px solid white', color: 'white', borderRadius: '4px', padding: '2px 6px' }}>EN</button>
+          <button onClick={() => setLanguage('he')} style={{ opacity: language === 'he' ? 1 : 0.5, cursor: 'pointer', background: 'transparent', border: '1px solid white', color: 'white', borderRadius: '4px', padding: '2px 6px' }}>HE</button>
+        </div>
+      )}
 
       <div className="header" style={{
         display: 'flex',

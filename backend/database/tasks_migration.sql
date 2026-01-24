@@ -1,7 +1,24 @@
--- Tasks table migration for User Context Agent
+-- Tasks and Projects migration for User Context Agent
 -- Run this in Supabase SQL Editor
 
--- Create tasks table
+-- ==================== PROJECTS (create first due to FK dependency) ====================
+CREATE TABLE IF NOT EXISTS projects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed', 'archived')),
+    progress FLOAT DEFAULT 0 CHECK (progress >= 0 AND progress <= 1),
+    life_sphere VARCHAR(50),
+    priority INT DEFAULT 3 CHECK (priority >= 1 AND priority <= 5),
+    start_date DATE,
+    target_end_date DATE,
+    actual_end_date DATE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ==================== TASKS ====================
 CREATE TABLE IF NOT EXISTS tasks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -31,23 +48,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     completed_at TIMESTAMPTZ
 );
 
--- Create projects table (for future use)
-CREATE TABLE IF NOT EXISTS projects (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL,
-    name TEXT NOT NULL,
-    description TEXT,
-    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed', 'archived')),
-    progress FLOAT DEFAULT 0 CHECK (progress >= 0 AND progress <= 1),
-    life_sphere VARCHAR(50),
-    priority INT DEFAULT 3 CHECK (priority >= 1 AND priority <= 5),
-    start_date DATE,
-    target_end_date DATE,
-    actual_end_date DATE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
+-- ==================== INDEXES ====================
 -- Create indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);

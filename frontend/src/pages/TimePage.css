@@ -1,0 +1,183 @@
+.time-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.time-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.time-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.time-card h2 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.time-card.full-width {
+    grid-column: 1 / -1;
+}
+
+/* Current Hora */
+.current-hora {
+    border-left: 4px solid #fbbf24;
+}
+
+.hora-planet {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.hora-planet-name {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fbbf24;
+}
+
+.hora-number {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.hora-time {
+    font-family: monospace;
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.75rem;
+}
+
+.hora-quality {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-style: italic;
+    margin-bottom: 0.5rem;
+}
+
+.hora-daynight {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Rahu Kala Warning */
+.time-card.warning {
+    border-left: 4px solid #f87171;
+    background: rgba(248, 113, 113, 0.05);
+}
+
+.time-card.warning h2 {
+    color: #fca5a5;
+}
+
+.kala-time {
+    font-size: 1.3rem;
+    font-family: monospace;
+    color: #fca5a5;
+    margin-bottom: 0.5rem;
+}
+
+.kala-advice {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Auspicious */
+.time-card.auspicious {
+    border-left: 4px solid #34d399;
+    background: rgba(52, 211, 153, 0.05);
+}
+
+.time-card.auspicious h2 {
+    color: #6ee7b7;
+}
+
+.muhurta-time {
+    font-size: 1.3rem;
+    font-family: monospace;
+    color: #6ee7b7;
+    margin-bottom: 0.5rem;
+}
+
+.muhurta-advice {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Hora Timeline */
+.hora-timeline {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem;
+}
+
+.hora-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hora-slot.sun {
+    border-top: 3px solid #fbbf24;
+}
+
+.hora-slot.moon {
+    border-top: 3px solid #e0e7ff;
+}
+
+.hora-slot.mars {
+    border-top: 3px solid #f87171;
+}
+
+.hora-slot.mercury {
+    border-top: 3px solid #34d399;
+}
+
+.hora-slot.jupiter {
+    border-top: 3px solid #fcd34d;
+}
+
+.hora-slot.venus {
+    border-top: 3px solid #f472b6;
+}
+
+.hora-slot.saturn {
+    border-top: 3px solid #6366f1;
+}
+
+.slot-time {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: monospace;
+}
+
+.slot-planet {
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 0.25rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .time-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hora-timeline {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}

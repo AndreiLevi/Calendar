@@ -108,3 +108,74 @@ export async function fetchBirthChart(birthDate, birthTime, latitude, longitude)
     });
     return res.json();
 }
+
+// Cosmic API for new features (Transits, Hora, Muhurtas, Tasks)
+export const cosmicAPI = {
+    async getHora(lat, lng, language = 'ru') {
+        const response = await fetch(
+            `${API_URL}/api/hora?latitude=${lat}&longitude=${lng}&language=${language}`
+        );
+        if (!response.ok) throw new Error('Failed to fetch hora');
+        return await response.json();
+    },
+
+    async getMuhurtas(lat, lng, language = 'ru') {
+        const response = await fetch(`${API_URL}/api/muhurtas`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ latitude: lat, longitude: lng, language })
+        });
+        if (!response.ok) throw new Error('Failed to fetch muhurtas');
+        return await response.json();
+    },
+
+    async getTransits(language = 'ru') {
+        const response = await fetch(`${API_URL}/api/transits?language=${language}`);
+        if (!response.ok) throw new Error('Failed to fetch transits');
+        return await response.json();
+    },
+
+    async getTasks(userId, options = {}) {
+        const params = new URLSearchParams();
+        if (options.status) params.append('status', options.status);
+        if (options.type) params.append('task_type', options.type);
+        if (options.sphere) params.append('life_sphere', options.sphere);
+
+        const response = await fetch(`${API_URL}/api/tasks?${params}`, {
+            headers: { 'X-User-Id': userId }
+        });
+        if (!response.ok) throw new Error('Failed to fetch tasks');
+        return await response.json();
+    },
+
+    async getTodayTasks(userId) {
+        const response = await fetch(`${API_URL}/api/tasks/today`, {
+            headers: { 'X-User-Id': userId }
+        });
+        if (!response.ok) throw new Error('Failed to fetch today tasks');
+        return await response.json();
+    },
+
+    async createTask(userId, taskData) {
+        const response = await fetch(`${API_URL}/api/tasks`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-User-Id': userId
+            },
+            body: JSON.stringify(taskData)
+        });
+        if (!response.ok) throw new Error('Failed to create task');
+        return await response.json();
+    },
+
+    async completeTask(userId, taskId) {
+        const response = await fetch(`${API_URL}/api/tasks/${taskId}/complete`, {
+            method: 'POST',
+            headers: { 'X-User-Id': userId }
+        });
+        if (!response.ok) throw new Error('Failed to complete task');
+        return await response.json();
+    }
+};
+
