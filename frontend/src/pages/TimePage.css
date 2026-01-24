@@ -181,3 +181,78 @@
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+/* Additional styles */
+.location-info {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 0.5rem;
+}
+
+.no-data {
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+}
+
+.kala-active-badge {
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(248, 113, 113, 0.3);
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #fca5a5;
+    display: inline-block;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* Sun Times */
+.time-card.sun-times {
+    border-left: 4px solid #fcd34d;
+}
+
+.sun-times-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.sun-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.sun-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.sun-time {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fcd34d;
+}
+
+/* Abhijit */
+.time-card.abhijit-muhurta {
+    border-left: 4px solid #a78bfa;
+    background: rgba(167, 139, 250, 0.05);
+}
+
+.time-card.abhijit-muhurta h2 {
+    color: #c4b5fd;
+}

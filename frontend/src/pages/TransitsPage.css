@@ -3,6 +3,96 @@
     margin: 0 auto;
 }
 
+/* AI Advisor Section */
+.ai-advisor {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.ai-advisor h2 {
+    color: #a78bfa;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.advisor-hint {
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.advisor-loading {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.loading-dots {
+    animation: pulse 1.5s infinite;
+}
+
+.advisor-content {
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.6;
+}
+
+.advisor-text {
+    font-size: 0.95rem;
+}
+
+/* Planning Insights */
+.planning-insights {
+    margin-bottom: 2rem;
+}
+
+.planning-insights h3 {
+    color: #fbbf24;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.insight-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 1rem;
+    border-left: 3px solid #fbbf24;
+}
+
+.insight-card.long {
+    border-left-color: #a78bfa;
+}
+
+.insight-card.medium {
+    border-left-color: #60a5fa;
+}
+
+.insight-planet {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.insight-message {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0;
+}
+
 .page-header {
     text-align: center;
     margin-bottom: 2rem;
