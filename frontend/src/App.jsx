@@ -21,10 +21,25 @@ function App() {
   const contextLanguage = outletContext.language;
   const contextSetLanguage = outletContext.setLanguage;
 
-  const [profile, setProfile] = useState({ name: '', dob: '', birthTime: '', birthPlace: '', birthLat: null, birthLng: null })
+  // Use profile from Layout context if available (for state persistence across navigation)
+  const contextProfile = outletContext.profile;
+  const contextSetProfile = outletContext.setProfile;
+  const contextActiveProfile = outletContext.activeProfile;
+  const contextSetActiveProfile = outletContext.setActiveProfile;
+  const contextHandleProfileChange = outletContext.handleProfileChange;
+
+  // Local state fallbacks (for standalone mode without Layout)
+  const [localProfile, setLocalProfile] = useState({ name: '', dob: '', birthTime: '', birthPlace: '', birthLat: null, birthLng: null });
+  const [localActiveProfile, setLocalActiveProfile] = useState(null);
+
+  // Use context if available, otherwise local state
+  const profile = contextProfile || localProfile;
+  const setProfile = contextSetProfile || setLocalProfile;
+  const activeProfile = contextActiveProfile || localActiveProfile;
+  const setActiveProfile = contextSetActiveProfile || setLocalActiveProfile;
+
   const [data, setData] = useState(null)
   const [user, setUser] = useState(contextUser || null);
-  const [activeProfile, setActiveProfile] = useState(null);
   const [mayan, setMayan] = useState(null)
   const [jyotish, setJyotish] = useState(null)
 
@@ -45,16 +60,26 @@ function App() {
     if (contextUser) setUser(contextUser);
   }, [contextUser]);
 
+
   useEffect(() => {
     if (!supabase) return; // Guard against missing keys
+
+    // Skip if Layout context already loaded the profile
+    const isInsideLayout = !!contextProfile;
+    if (isInsideLayout && contextProfile.dob) {
+      console.log('Using profile from Layout context, skipping local load');
+      return;
+    }
 
     // Check active session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user || null);
       if (session?.user) {
         setProfile(prev => ({ ...prev, name: session.user.user_metadata.full_name || '' }));
-        // Load active profile
-        await loadActiveProfile(session.user.id);
+        // Load active profile only if not already loaded via Layout
+        if (!isInsideLayout) {
+          await loadActiveProfile(session.user.id);
+        }
       }
     });
 
@@ -62,13 +87,15 @@ function App() {
       setUser(session?.user || null);
       if (session?.user) {
         setProfile(prev => ({ ...prev, name: session.user.user_metadata.full_name || '' }));
-        // Load active profile
-        await loadActiveProfile(session.user.id);
+        // Load active profile only if not already loaded via Layout
+        if (!isInsideLayout) {
+          await loadActiveProfile(session.user.id);
+        }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [contextProfile]);
 
   // Auto-refresh when language changes
   useEffect(() => {
