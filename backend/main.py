@@ -3,8 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import opik
-opik.configure(use_local=True)
+# import opik
+# opik.configure(use_local=True) # Fails in production without OPIK_URL_OVERRIDE
 
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
