@@ -1,6 +1,7 @@
 import swisseph as swe
 from datetime import datetime, timezone
 from typing import Dict, Any
+from opik import track
 
 class JyotishAgent:
     """
@@ -47,6 +48,7 @@ class JyotishAgent:
         return swe.julday(dt_utc.year, dt_utc.month, dt_utc.day, 
                           dt_utc.hour + dt_utc.minute/60.0 + dt_utc.second/3600.0)
 
+    @track
     def calculate_panchanga(self, date_str: str) -> Dict[str, Any]:
         jd = self._get_julian_day(date_str)
 

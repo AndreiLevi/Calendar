@@ -10,7 +10,7 @@ class StrategyOrchestrator:
 
     def __init__(self):
         # Configure API Key (User needs to set OPENROUTER_API_KEY in env)
-        api_key = os.getenv("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")
+        api_key = os.getenv("OPENROUTER_API_KEY")
         base_url = "https://openrouter.ai/api/v1"
         
         # Default to a high-quality model (User can override via ENV)
@@ -77,3 +77,45 @@ class StrategyOrchestrator:
             return response.choices[0].message.content
         except Exception as e:
             return f"Error gathering wisdom: {str(e)}"
+
+    def ask_agent(self, question: str, context_data: Dict, language: str = "ru") -> str:
+        """
+        Answers specific user questions based on provided agent data context.
+        Example: "What is the current muhurta and is it good for signing a contract?"
+        """
+        if not self.client:
+            return "AI Key missing. Cannot generate natural language answer."
+
+        lang_instruction = "Respond in Russian." if language == "ru" else "Respond in English."
+
+        prompt = f"""
+        You are a mystical yet practical structural advisor. 
+        The user has asked a specific question about astrological/numerological/time elements.
+        
+        USER QUESTION: "{question}"
+        
+        AVAILABLE CONTEXT DATA:
+        {context_data}
+        
+        INSTRUCTIONS:
+        1. Answer the user's question directly using ONLY the provided context data.
+        2. If the data to answer the question is not in the context, politely state that you don't have that specific data right now.
+        3. Be concise, practical, and insightful. Do not dump the raw JSON data.
+        4. {lang_instruction}
+        """
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {"role": "system", "content": "You are a mystical yet practical calendar advisor."},
+                    {"role": "user", "content": prompt}
+                ],
+                headers={
+                    "HTTP-Referer": "https://calendar-app.com",
+                    "X-Title": "Universal Calendar",
+                }
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            return f"Error analyzing question: {str(e)}"

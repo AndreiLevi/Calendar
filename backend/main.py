@@ -3,6 +3,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import opik
+opik.configure(use_local=True)
+
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -12,6 +15,7 @@ from agents.mayan_agent import MayanAgent
 from agents.jyotish_agent import JyotishAgent
 from orchestrator import StrategyOrchestrator
 from services.profile_service import ProfileService
+from webhook_router import create_webhook_router
 
 # Try to import pyswisseph-dependent agents
 try:
@@ -68,6 +72,18 @@ if TASK_SERVICE_AVAILABLE and TaskService:
         task_service = TaskService()
     except ValueError as e:
         print(f"Warning: TaskService not initialized: {e}")
+        task_service = None
+
+# Initialize Webhook Router
+webhook_router = create_webhook_router(
+    muhurtas_agent=muhurtas_agent,
+    transits_agent=transits_agent,
+    jyotish_agent=jyotish_agent,
+    mayan_agent=mayan_agent,
+    numerology_agent=numerology_agent,
+    orchestrator=orchestrator
+)
+print(f"Webhook router initialized with {len(webhook_router._actions)} actions")
 
 class DateRequest(BaseModel):
     dob: str
@@ -114,8 +130,34 @@ def health_check():
             "tasks": task_service is not None,
             "muhurtas": muhurtas_agent is not None,
             "transits": transits_agent is not None,
-            "pyswisseph": SWISSEPH_AVAILABLE
+            "pyswisseph": SWISSEPH_AVAILABLE,
+            "webhook": True,
+            "webhook_actions": len(webhook_router._actions)
         }
+    }
+
+# ==================== WEBHOOK ====================
+
+class WebhookRequest(BaseModel):
+    action: str
+    params: Optional[Dict[str, Any]] = {}
+    api_key: Optional[str] = None
+
+@app.post("/api/webhook")
+async def webhook_endpoint(request: WebhookRequest):
+    """Universal webhook: route any action to the right agent.
+    
+    Send {"action": "list_actions"} to discover all available actions.
+    """
+    result = await webhook_router.dispatch(request.dict())
+    return result
+
+@app.get("/api/webhook/actions")
+def webhook_actions():
+    """Discovery: list all available webhook actions (GET for easy browser access)"""
+    return {
+        "success": True,
+        "actions": webhook_router.get_actions_list()
     }
 
 class MuhurtasRequest(BaseModel):
