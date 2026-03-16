@@ -9,3 +9,5 @@ pyswisseph
 supabase
 timezonefinder
 pytz
+opik
+mcp
